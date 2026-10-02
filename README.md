@@ -1,6 +1,6 @@
 # desk
 
-Desktop widgets for Omarchy, above the wallpaper and below windows: a full-height column on the left (calendar, pull requests, GitHub Actions, upcoming, weather) and Spotify top-right (cover and player islands). Each fades out while a window on the visible workspace overlaps it.
+Desktop widgets for Omarchy, above the wallpaper and below windows: a full-height column on the left (weather, calendar, upcoming, pull requests, GitHub Actions) and Spotify top-right (cover and player islands). Each fades out while a window on the visible workspace overlaps it.
 
 - **Spotify**: large cover art (double-click to show the Spotify window), title, artist, progress, previous / play-pause / next
 - **Calendar**: month grid (Monday first, ISO week numbers) with a dot per calendar on days with events, month stepping; click a day to list its events, click the month title to jump back to today

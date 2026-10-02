@@ -8,7 +8,7 @@ import qs.Commons
 import "Spotify.js" as Spotify
 
 // Desktop widgets on the main screen: a full-height column on the left
-// (calendar, pull requests, GitHub Actions, events, weather) and Spotify
+// (weather, calendar, events, pull requests, GitHub Actions) and Spotify
 // top-right. Both sit on
 // the Bottom layer (above the wallpaper, below windows) and fade out while a
 // window on the visible workspace overlaps them.
@@ -76,7 +76,7 @@ Item {
     rectHeight: 40 + root.margin + rightColumn.implicitHeight
   }
 
-  // Left: calendar, pull requests, GitHub Actions, events, weather.
+  // Left: weather, calendar, events, pull requests, GitHub Actions.
   PanelWindow {
     screen: root.targetScreen
     visible: root.targetScreen !== null && (!leftCover.covered || leftColumn.opacity > 0)
@@ -101,6 +101,12 @@ Item {
       Island {
         glass: root.glass
         Layout.fillWidth: true
+        WeatherSection { width: parent.width }
+      }
+
+      Island {
+        glass: root.glass
+        Layout.fillWidth: true
         CalendarSection {
           width: parent.width
           model: events
@@ -109,18 +115,6 @@ Item {
             root.selectedDate = root.selectedDate && events.sameDay(root.selectedDate, date) ? null : date
           }
         }
-      }
-
-      Island {
-        glass: root.glass
-        Layout.fillWidth: true
-        PullsSection { width: parent.width; model: github; maxMine: 3 }
-      }
-
-      Island {
-        glass: root.glass
-        Layout.fillWidth: true
-        ActionsSection { width: parent.width; model: github; maxRuns: 2 }
       }
 
       Island {
@@ -139,7 +133,13 @@ Item {
       Island {
         glass: root.glass
         Layout.fillWidth: true
-        WeatherSection { width: parent.width }
+        PullsSection { width: parent.width; model: github; maxMine: 3 }
+      }
+
+      Island {
+        glass: root.glass
+        Layout.fillWidth: true
+        ActionsSection { width: parent.width; model: github; maxRuns: 2 }
       }
     }
   }
