@@ -1,6 +1,5 @@
 import QtQuick
 import qs.Commons
-import qs.Ui
 
 // Month grid, Monday first, with ISO week numbers. Days with events get a
 // dot per calendar; clicking a day selects it.
@@ -85,10 +84,13 @@ Item {
       width: parent.width
       height: 26
 
-      PanelSectionHeader {
+      Text {
         anchors.verticalCenter: parent.verticalCenter
-        text: Qt.formatDate(new Date(root.viewYear, root.viewMonth, 1), "MMMM yyyy").toUpperCase()
-        foreground: root.fg
+        text: Qt.formatDate(new Date(root.viewYear, root.viewMonth, 1), "MMMM yyyy")
+        color: root.fg
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.title
+        font.bold: true
 
         MouseArea {
           anchors.fill: parent
@@ -162,11 +164,13 @@ Item {
             height: root.cell * 0.78
 
             Rectangle {
-              anchors.fill: parent
-              anchors.margins: 2
-              radius: Style.cornerRadius
+              anchors.horizontalCenter: parent.horizontalCenter
+              y: 1
+              width: Math.min(parent.width, parent.height) - 4
+              height: width
+              radius: width / 2
               color: cell.isToday ? Color.accent
-                : (cellMouse.containsMouse ? Style.hoverFillFor(root.fg, Color.accent) : "transparent")
+                : (cellMouse.containsMouse ? Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.1) : "transparent")
               border.width: cell.isSelected ? 1 : 0
               border.color: cell.isToday ? root.fg : Color.accent
             }
@@ -174,7 +178,7 @@ Item {
             Text {
               anchors.horizontalCenter: parent.horizontalCenter
               anchors.verticalCenter: parent.verticalCenter
-              anchors.verticalCenterOffset: -3
+              anchors.verticalCenterOffset: -2
               text: cell.date.getDate()
               color: cell.isToday ? Color.popups.background : (cell.inMonth ? root.fg : Qt.rgba(root.dim.r, root.dim.g, root.dim.b, 0.5))
               font.family: root.fontFamily
@@ -185,7 +189,7 @@ Item {
             Row {
               anchors.horizontalCenter: parent.horizontalCenter
               anchors.bottom: parent.bottom
-              anchors.bottomMargin: 5
+              anchors.bottomMargin: 1
               spacing: 2
               opacity: cell.inMonth ? 1 : 0.5
 
@@ -196,6 +200,7 @@ Item {
                   required property string modelData
                   width: 4
                   height: 4
+                  radius: 2
                   color: cell.isToday ? Color.popups.background : modelData
                 }
               }

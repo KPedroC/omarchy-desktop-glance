@@ -6,7 +6,6 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Services.Mpris
 import qs.Commons
-import qs.Ui
 import "Spotify.js" as Spotify
 
 // Full-height sidebar on the left of the main screen. Sits on the Bottom
@@ -88,47 +87,46 @@ Item {
     exclusionMode: ExclusionMode.Normal
     exclusiveZone: 0
 
-    Rectangle {
+    ColumnLayout {
       id: frame
       anchors.fill: parent
+      spacing: root.margin
       opacity: root.covered ? 0 : 1
       Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-      radius: Style.cornerRadius
-      color: Color.popups.background
-      border.width: Math.max(1, Style.space(2))
-      border.color: Color.popups.border
 
-      ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: Style.spacing.panelPadding
-        spacing: Style.spacing.panelGap
+      Island {
+        Layout.fillWidth: true
+        PlayerSection { width: parent.width; player: root.player }
+      }
 
-        PlayerSection { Layout.fillWidth: true; player: root.player }
-        Divider {}
+      Island {
+        Layout.fillWidth: true
         CalendarSection {
-          Layout.fillWidth: true
+          width: parent.width
           model: events
           selectedDate: root.selectedDate
           onDateClicked: function(date) {
             root.selectedDate = root.selectedDate && events.sameDay(root.selectedDate, date) ? null : date
           }
         }
-        Divider {}
+      }
+
+      Island {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
         EventsSection {
-          Layout.fillWidth: true
-          Layout.fillHeight: true
+          width: parent.width
+          height: parent.height
           model: events
           selectedDate: root.selectedDate
           onCleared: root.selectedDate = null
         }
-        Divider {}
-        WeatherSection { Layout.fillWidth: true }
+      }
+
+      Island {
+        Layout.fillWidth: true
+        WeatherSection { width: parent.width }
       }
     }
-  }
-
-  component Divider: PanelSeparator {
-    Layout.fillWidth: true
-    foreground: Color.popups.text
   }
 }

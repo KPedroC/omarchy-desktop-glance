@@ -50,6 +50,16 @@ The refresh token lives in `~/.local/state/omarchy-desk/google-token.json`; decl
 `bin/calendar-sync` runs every 5 minutes (Google API calendars at most every 15, reusing the access token for its hour; the ↻ button forces a full sync) and writes this month's grid through two months ahead to `~/.cache/omarchy-desk/events.json`. It never prints or logs feed URLs.
 Requires `python-recurring-ical-events` (`sudo pacman -S python-recurring-ical-events`).
 
+## Glass
+
+Each section is a translucent island; Hyprland blurs what's behind them. Omarchy ships with blur off, so enable it for the sidebar only (`~/.config/hypr/looknfeel.lua`):
+
+```lua
+hl.config({ decoration = { blur = { enabled = true, size = 8, passes = 3 } } })
+o.window({ class = ".*" }, { no_blur = true })  -- keep windows unblurred
+hl.layer_rule({ match = { namespace = "^kpedroc-desk$" }, blur = true, ignore_alpha = 0.1 })
+```
+
 ## Config
 
 - `Service.qml`: `monitor` (empty = first screen), `margin`, `sidebarWidth`

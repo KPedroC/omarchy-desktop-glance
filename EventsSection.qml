@@ -1,7 +1,6 @@
 import QtQuick
 import Quickshell
 import qs.Commons
-import qs.Ui
 
 // Upcoming events grouped by day, or one day's events when a date is picked
 // in the calendar. Shows as many as fit in the height it's given.
@@ -86,10 +85,13 @@ Item {
       width: parent.width
       height: 26
 
-      PanelSectionHeader {
+      Text {
         anchors.verticalCenter: parent.verticalCenter
-        text: (root.selectedDate ? root.dayLabel(root.selectedDate) : "Upcoming").toUpperCase()
-        foreground: root.fg
+        text: root.selectedDate ? root.dayLabel(root.selectedDate) : "Upcoming"
+        color: root.fg
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.title
+        font.bold: true
       }
 
       IconButton {
@@ -164,16 +166,13 @@ Item {
           color: root.dim
           font.family: root.fontFamily
           font.pixelSize: Style.font.caption
-          font.bold: true
         }
 
         Rectangle {
           visible: !rowItem.row.header
           anchors.fill: parent
-          radius: Style.cornerRadius
-          color: !rowItem.row.header && rowItem.row.live ? Style.selectedFillFor(root.fg, Color.accent) : "transparent"
-          border.width: !rowItem.row.header && rowItem.row.live ? 1 : 0
-          border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.6)
+          radius: 8
+          color: !rowItem.row.header && rowItem.row.live ? Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.08) : "transparent"
 
           Rectangle {
             id: dot
@@ -181,6 +180,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: 3
             height: 16
+            radius: 1.5
             color: rowItem.row.header ? "transparent" : rowItem.row.event.color
           }
 
@@ -217,7 +217,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: joinText.implicitWidth + 16
             height: 20
-            radius: Style.cornerRadius
+            radius: 10
             color: joinMouse.containsMouse ? Qt.lighter(Color.accent, 1.15) : Color.accent
 
             Text {

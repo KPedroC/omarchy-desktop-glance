@@ -1,7 +1,7 @@
 import QtQuick
 import qs.Commons
 
-// Flat square icon button using Omarchy's hover fill.
+// Round icon button with a soft hover fill.
 Rectangle {
   id: root
 
@@ -13,8 +13,8 @@ Rectangle {
 
   width: size
   height: size
-  radius: Style.cornerRadius
-  color: mouse.containsMouse && enabled ? Style.hoverFillFor(foreground, Color.accent) : "transparent"
+  radius: size / 2
+  color: mouse.containsMouse && enabled ? Qt.rgba(foreground.r, foreground.g, foreground.b, 0.12) : "transparent"
   opacity: enabled ? 1 : 0.35
 
   Text {

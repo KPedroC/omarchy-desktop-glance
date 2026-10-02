@@ -2,7 +2,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Mpris
 import qs.Commons
-import qs.Ui
 
 Item {
   id: root
@@ -37,17 +36,12 @@ Item {
     width: root.width
     spacing: Style.spacing.lg
 
-    PanelSectionHeader {
-      text: root.player && root.player.isPlaying ? "NOW PLAYING" : "SPOTIFY"
-      foreground: root.fg
-    }
-
     Rectangle {
       anchors.horizontalCenter: parent.horizontalCenter
       width: Math.min(parent.width, 280)
       height: width
-      radius: Style.cornerRadius
-      color: Style.selectedFillFor(root.fg, Color.accent)
+      radius: 12
+      color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.08)
       clip: true
 
       Image {
@@ -108,16 +102,16 @@ Item {
 
       Rectangle {
         width: parent.width
-        height: Math.max(Style.space(4), 4)
-        radius: Style.cornerRadius
-        color: Style.selectedFillFor(root.fg, Color.accent)
+        height: 4
+        radius: 2
+        color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.15)
 
         Rectangle {
           width: root.player && root.player.length > 0
             ? parent.width * Math.min(1, root.player.position / root.player.length) : 0
           height: parent.height
           radius: parent.radius
-          color: root.fg
+          color: Color.accent
         }
       }
 
@@ -161,8 +155,7 @@ Item {
         size: 44
         glyphScale: 0.6
         enabled: root.player !== null && root.player.canTogglePlaying
-        border.width: 1
-        border.color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.25)
+        color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.1)
         onClicked: root.player.togglePlaying()
       }
       IconButton {
