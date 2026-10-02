@@ -71,7 +71,7 @@ Item {
     screen: root.targetScreen
     rectX: root.targetScreen ? root.targetScreen.width - root.margin - root.playerWidth : 0
     rectWidth: root.playerWidth
-    rectHeight: 40 + root.margin + playerIsland.implicitHeight
+    rectHeight: 40 + root.margin + rightColumn.implicitHeight
   }
 
   // Left: calendar, events, weather.
@@ -134,12 +134,12 @@ Item {
   PanelWindow {
     id: rightWindow
     screen: root.targetScreen
-    visible: root.targetScreen !== null && (!rightCover.covered || playerIsland.opacity > 0)
+    visible: root.targetScreen !== null && (!rightCover.covered || rightColumn.opacity > 0)
     color: "transparent"
     anchors { top: true; right: true }
     margins { top: root.margin; right: root.margin }
     implicitWidth: root.playerWidth
-    implicitHeight: playerIsland.implicitHeight
+    implicitHeight: rightColumn.implicitHeight
 
     WlrLayershell.namespace: "kpedroc-desk"
     WlrLayershell.layer: WlrLayer.Bottom
@@ -147,14 +147,26 @@ Item {
     exclusionMode: ExclusionMode.Normal
     exclusiveZone: 0
 
-    Island {
-      id: playerIsland
-      glass: root.glass
-      width: parent.width
-      height: parent.height
+    ColumnLayout {
+      id: rightColumn
+      anchors.fill: parent
+      spacing: root.margin
       opacity: rightCover.covered ? 0 : 1
       Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-      PlayerSection { width: parent.width; player: root.player }
+
+      Island {
+        id: artIsland
+        glass: root.glass
+        padding: 0
+        Layout.fillWidth: true
+        PlayerArt { width: parent.width; radius: artIsland.radius; player: root.player }
+      }
+
+      Island {
+        glass: root.glass
+        Layout.fillWidth: true
+        PlayerControls { width: parent.width; player: root.player }
+      }
     }
   }
 }

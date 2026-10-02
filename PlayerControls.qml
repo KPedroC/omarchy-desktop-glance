@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Services.Mpris
 import qs.Commons
 
+// Track title, artist, progress and playback controls.
 Item {
   id: root
 
@@ -35,41 +36,6 @@ Item {
     id: content
     width: root.width
     spacing: Style.spacing.lg
-
-    Rectangle {
-      anchors.horizontalCenter: parent.horizontalCenter
-      width: Math.min(parent.width, 280)
-      height: width
-      radius: 12
-      color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.08)
-      clip: true
-
-      Image {
-        anchors.fill: parent
-        source: root.hasTrack ? (root.player.trackArtUrl || "") : ""
-        sourceSize.width: width * 2
-        sourceSize.height: height * 2
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: true
-        visible: status === Image.Ready
-      }
-
-      Text {
-        anchors.centerIn: parent
-        visible: !root.hasTrack || (root.player.trackArtUrl || "") === ""
-        text: "󰓇"
-        color: root.dim
-        font.family: root.fontFamily
-        font.pixelSize: 96
-      }
-
-      MouseArea {
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        onClicked: if (!root.player) Quickshell.execDetached([root.togglePath])
-        onDoubleClicked: Quickshell.execDetached([root.togglePath])
-      }
-    }
 
     Column {
       width: parent.width
