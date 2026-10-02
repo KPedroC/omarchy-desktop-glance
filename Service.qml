@@ -7,9 +7,9 @@ import Quickshell.Services.Mpris
 import qs.Commons
 import "Spotify.js" as Spotify
 
-// Desktop widgets on the main screen: your day on the left (calendar,
-// events, weather) and work + music on the right (Spotify, pull requests,
-// GitHub Actions). Both sit on
+// Desktop widgets on the main screen: a full-height column on the left
+// (calendar, pull requests, GitHub Actions, events, weather) and Spotify
+// top-right. Both sit on
 // the Bottom layer (above the wallpaper, below windows) and fade out while a
 // window on the visible workspace overlaps them.
 Item {
@@ -23,7 +23,7 @@ Item {
   // Hyprland's gaps_out, so the sidebar lines up with tiled windows.
   readonly property int margin: Style.gapsOut * 2
   readonly property int sidebarWidth: 380
-  readonly property int rightWidth: 380
+  readonly property int rightWidth: 340
   // Island background opacity (0 = clear glass, 1 = solid).
   readonly property real glass: 0.35
 
@@ -67,7 +67,7 @@ Item {
     rectHeight: root.targetScreen ? root.targetScreen.height : 0
   }
 
-  // Right column from the top down to its last island (bar + gap + islands).
+  // Top-right corner down to the Spotify islands' bottom edge (bar + gap + islands).
   CoverWatcher {
     id: rightCover
     screen: root.targetScreen
@@ -76,7 +76,7 @@ Item {
     rectHeight: 40 + root.margin + rightColumn.implicitHeight
   }
 
-  // Left: calendar, events, weather.
+  // Left: calendar, pull requests, GitHub Actions, events, weather.
   PanelWindow {
     screen: root.targetScreen
     visible: root.targetScreen !== null && (!leftCover.covered || leftColumn.opacity > 0)
@@ -114,6 +114,18 @@ Item {
       Island {
         glass: root.glass
         Layout.fillWidth: true
+        PullsSection { width: parent.width; model: github; maxReview: 2; maxMine: 2 }
+      }
+
+      Island {
+        glass: root.glass
+        Layout.fillWidth: true
+        ActionsSection { width: parent.width; model: github; maxRuns: 2 }
+      }
+
+      Island {
+        glass: root.glass
+        Layout.fillWidth: true
         Layout.fillHeight: true
         EventsSection {
           width: parent.width
@@ -132,7 +144,7 @@ Item {
     }
   }
 
-  // Right: Spotify, pull requests, GitHub Actions.
+  // Right: Spotify, top corner.
   PanelWindow {
     id: rightWindow
     screen: root.targetScreen
@@ -168,18 +180,6 @@ Item {
         glass: root.glass
         Layout.fillWidth: true
         PlayerControls { width: parent.width; player: root.player }
-      }
-
-      Island {
-        glass: root.glass
-        Layout.fillWidth: true
-        PullsSection { width: parent.width; model: github }
-      }
-
-      Island {
-        glass: root.glass
-        Layout.fillWidth: true
-        ActionsSection { width: parent.width; model: github }
       }
     }
   }

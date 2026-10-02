@@ -13,6 +13,7 @@ Item {
   readonly property color failColor: Color.urgent
   readonly property string fontFamily: Style.font.family
   property var model: null
+  property int maxRuns: 2
 
   readonly property var now: model ? model.now : new Date()
   readonly property var runs: model ? model.runs : []
@@ -99,7 +100,7 @@ Item {
     }
 
     Repeater {
-      model: root.runs
+      model: root.runs.slice(0, root.maxRuns)
 
       Rectangle {
         id: row
