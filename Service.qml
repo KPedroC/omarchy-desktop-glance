@@ -22,6 +22,8 @@ Item {
   // Hyprland's gaps_out, so the sidebar lines up with tiled windows.
   readonly property int margin: Style.gapsOut * 2
   readonly property int sidebarWidth: 380
+  // Island background opacity (0 = clear glass, 1 = solid).
+  readonly property real glass: 0.35
 
   // Date picked in the calendar; null shows upcoming events.
   property var selectedDate: null
@@ -95,11 +97,13 @@ Item {
       Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
       Island {
+        glass: root.glass
         Layout.fillWidth: true
         PlayerSection { width: parent.width; player: root.player }
       }
 
       Island {
+        glass: root.glass
         Layout.fillWidth: true
         CalendarSection {
           width: parent.width
@@ -112,6 +116,7 @@ Item {
       }
 
       Island {
+        glass: root.glass
         Layout.fillWidth: true
         Layout.fillHeight: true
         EventsSection {
@@ -124,6 +129,7 @@ Item {
       }
 
       Island {
+        glass: root.glass
         Layout.fillWidth: true
         WeatherSection { width: parent.width }
       }

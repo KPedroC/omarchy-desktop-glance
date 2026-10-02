@@ -62,6 +62,6 @@ hl.layer_rule({ match = { namespace = "^kpedroc-desk$" }, blur = true, ignore_al
 
 ## Config
 
-- `Service.qml`: `monitor` (empty = first screen), `margin`, `sidebarWidth`
+- `Service.qml`: `monitor` (empty = first screen), `margin`, `sidebarWidth`, `glass` (island opacity)
 - Bar widget entry in `shell.json`: `maxChars` (title length, default 30)
 - Sidebar changes need `omarchy-restart-shell`; the bar widget reloads on save
