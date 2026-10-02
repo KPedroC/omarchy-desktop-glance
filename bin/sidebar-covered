@@ -1,0 +1,21 @@
+#!/bin/bash
+# Prints 1 if a window on the monitor's visible workspaces overlaps the
+# sidebar, else 0.
+#   sidebar-covered <monitor> <x> <y> <width> <height>   (monitor-local, logical px)
+
+monitor=$1 x=$2 y=$3 w=$4 h=$5
+
+jq -rn \
+  --argjson monitors "$(hyprctl monitors -j)" \
+  --argjson clients "$(hyprctl clients -j)" \
+  --arg monitor "$monitor" --argjson x "$x" --argjson y "$y" --argjson w "$w" --argjson h "$h" '
+  ($monitors | map(select(.name == $monitor)) | first) as $m
+  | if $m == null then 0 else
+      [$m.activeWorkspace.id, $m.specialWorkspace.id] as $visible
+      | ($m.x + $x) as $left | ($m.y + $y) as $top
+      | [$clients[]
+          | select(.mapped and (.hidden | not) and (.workspace.id as $id | $visible | index($id)))
+          | select(.at[0] < $left + $w and .at[0] + .size[0] > $left
+                   and .at[1] < $top + $h and .at[1] + .size[1] > $top)]
+      | if length > 0 then 1 else 0 end
+    end'

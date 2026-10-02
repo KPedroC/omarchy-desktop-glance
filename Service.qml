@@ -1,12 +1,15 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Hyprland
+import Quickshell.Io
 import Quickshell.Services.Mpris
 import qs.Commons
 import "Spotify.js" as Spotify
 
 // Full-height sidebar on the left of the main screen. Sits on the Bottom
-// layer: above the wallpaper, below windows.
+// layer: above the wallpaper, below windows. Fades out while a window on
+// the visible workspace overlaps it.
 Item {
   id: root
 
@@ -26,9 +29,46 @@ Item {
     return screens.length > 0 ? screens[0] : null
   }
 
+  readonly property string coveredPath: decodeURIComponent(Qt.resolvedUrl("bin/sidebar-covered").toString().replace("file://", ""))
+  property bool covered: false
+
+  function checkCovered() {
+    if (!root.targetScreen) return
+    coveredProc.command = [root.coveredPath, root.targetScreen.name, String(root.margin), "0",
+      String(root.sidebarWidth), String(root.targetScreen.height)]
+    if (coveredProc.running) recheck.restart()
+    else coveredProc.running = true
+  }
+
+  Process {
+    id: coveredProc
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: root.covered = text.trim() === "1"
+    }
+  }
+
+  // Coalesces bursts of Hyprland events into one check.
+  Timer {
+    id: recheck
+    interval: 80
+    onTriggered: root.checkCovered()
+  }
+
+  Connections {
+    target: Hyprland
+    function onRawEvent(event) {
+      var name = event && event.name ? String(event.name) : ""
+      if (/^(openwindow|closewindow|movewindow|workspace|focusedmon|changefloatingmode|fullscreen|activespecial|moveworkspace|resizewindow|movewindowv2|workspacev2|activespecialv2)/.test(name))
+        recheck.restart()
+    }
+  }
+
+  Component.onCompleted: checkCovered()
+
   PanelWindow {
     screen: root.targetScreen
-    visible: root.targetScreen !== null
+    visible: root.targetScreen !== null && (!root.covered || frame.opacity > 0)
     color: "transparent"
     anchors { top: true; bottom: true; left: true }
     margins { top: root.margin; bottom: root.margin; left: root.margin }
@@ -41,7 +81,10 @@ Item {
     exclusiveZone: 0
 
     Rectangle {
+      id: frame
       anchors.fill: parent
+      opacity: root.covered ? 0 : 1
+      Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
       radius: 14
       color: Qt.rgba(Color.popups.background.r, Color.popups.background.g, Color.popups.background.b, 0.85)
       border.width: 1

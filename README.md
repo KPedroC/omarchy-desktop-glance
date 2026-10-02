@@ -1,6 +1,6 @@
 # desk
 
-Desktop sidebar for Omarchy: full height on the left, above the wallpaper, below windows.
+Desktop sidebar for Omarchy: full height on the left, above the wallpaper, below windows. Fades out while a window on the visible workspace overlaps it.
 
 - **Spotify**: large cover art, title, artist, progress, previous / play-pause / next
 - **Calendar**: today's date, month grid (Monday first, ISO week numbers), month stepping; click the month title to jump back to today
