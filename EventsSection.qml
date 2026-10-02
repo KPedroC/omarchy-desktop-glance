@@ -67,8 +67,12 @@ Item {
     return list
   }
 
+  function isMidnight(d) {
+    return d.getHours() === 0 && d.getMinutes() === 0
+  }
+
   function timeLabel(row) {
-    if (row.event.allDay) return "All day"
+    if (row.event.allDay || (isMidnight(row.start) && isMidnight(row.end) && row.end > row.start)) return "All day"
     return Qt.formatTime(row.start, "HH:mm") + "–" + Qt.formatTime(row.end, "HH:mm")
   }
 
@@ -155,8 +159,9 @@ Item {
 
         width: root.width
         height: row.header ? header.implicitHeight : 30
-        // Hide rows cut off at the bottom rather than showing half of one.
-        opacity: y + height <= root.height ? 1 : 0
+        // Hide rows cut off at the bottom rather than showing half of one;
+        // a day header also needs room for its first event.
+        opacity: y + height + (row.header ? 30 : 0) <= root.height ? 1 : 0
 
         Text {
           id: header

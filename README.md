@@ -1,6 +1,6 @@
 # desk
 
-Desktop sidebar for Omarchy: full height on the left, above the wallpaper, below windows. Fades out while a window on the visible workspace overlaps it.
+Desktop widgets for Omarchy, above the wallpaper and below windows: a full-height column on the left (calendar, upcoming, weather) and a Spotify island top-right. Each fades out while a window on the visible workspace overlaps it.
 
 - **Spotify**: large cover art (double-click to show the Spotify window), title, artist, progress, previous / play-pause / next
 - **Calendar**: month grid (Monday first, ISO week numbers) with a dot per calendar on days with events, month stepping; click a day to list its events, click the month title to jump back to today
@@ -62,6 +62,6 @@ hl.layer_rule({ match = { namespace = "^kpedroc-desk$" }, blur = true, ignore_al
 
 ## Config
 
-- `Service.qml`: `monitor` (empty = first screen), `margin`, `sidebarWidth`, `glass` (island opacity)
+- `Service.qml`: `monitor` (empty = first screen), `margin`, `sidebarWidth`, `playerWidth`, `glass` (island opacity)
 - Bar widget entry in `shell.json`: `maxChars` (title length, default 30)
 - Sidebar changes need `omarchy-restart-shell`; the bar widget reloads on save

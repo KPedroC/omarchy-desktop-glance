@@ -3,14 +3,14 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
-import Quickshell.Io
 import Quickshell.Services.Mpris
 import qs.Commons
 import "Spotify.js" as Spotify
 
-// Full-height sidebar on the left of the main screen. Sits on the Bottom
-// layer: above the wallpaper, below windows. Fades out while a window on
-// the visible workspace overlaps it.
+// Desktop widgets on the main screen: a full-height column on the left
+// (calendar, events, weather) and a Spotify island top-right. Both sit on
+// the Bottom layer (above the wallpaper, below windows) and fade out while a
+// window on the visible workspace overlaps them.
 Item {
   id: root
 
@@ -22,6 +22,7 @@ Item {
   // Hyprland's gaps_out, so the sidebar lines up with tiled windows.
   readonly property int margin: Style.gapsOut * 2
   readonly property int sidebarWidth: 380
+  readonly property int playerWidth: 340
   // Island background opacity (0 = clear glass, 1 = solid).
   readonly property real glass: 0.35
 
@@ -36,30 +37,11 @@ Item {
     return screens.length > 0 ? screens[0] : null
   }
 
-  readonly property string coveredPath: decodeURIComponent(Qt.resolvedUrl("bin/sidebar-covered").toString().replace("file://", ""))
-  property bool covered: false
-
-  function checkCovered() {
-    if (!root.targetScreen) return
-    coveredProc.command = [root.coveredPath, root.targetScreen.name, String(root.margin), "0",
-      String(root.sidebarWidth), String(root.targetScreen.height)]
-    if (coveredProc.running) recheck.restart()
-    else coveredProc.running = true
-  }
-
-  Process {
-    id: coveredProc
-    stdout: StdioCollector {
-      waitForEnd: true
-      onStreamFinished: root.covered = text.trim() === "1"
-    }
-  }
-
   // Coalesces bursts of Hyprland events into one check.
   Timer {
     id: recheck
     interval: 80
-    onTriggered: root.checkCovered()
+    onTriggered: { leftCover.check(); rightCover.check() }
   }
 
   Connections {
@@ -71,13 +53,31 @@ Item {
     }
   }
 
-  Component.onCompleted: checkCovered()
+  Component.onCompleted: recheck.restart()
 
   EventsModel { id: events }
 
+  CoverWatcher {
+    id: leftCover
+    screen: root.targetScreen
+    rectX: root.margin
+    rectWidth: root.sidebarWidth
+    rectHeight: root.targetScreen ? root.targetScreen.height : 0
+  }
+
+  // Top-right corner down to the island's bottom edge (bar + gap + card).
+  CoverWatcher {
+    id: rightCover
+    screen: root.targetScreen
+    rectX: root.targetScreen ? root.targetScreen.width - root.margin - root.playerWidth : 0
+    rectWidth: root.playerWidth
+    rectHeight: 40 + root.margin + playerIsland.implicitHeight
+  }
+
+  // Left: calendar, events, weather.
   PanelWindow {
     screen: root.targetScreen
-    visible: root.targetScreen !== null && (!root.covered || frame.opacity > 0)
+    visible: root.targetScreen !== null && (!leftCover.covered || leftColumn.opacity > 0)
     color: "transparent"
     anchors { top: true; bottom: true; left: true }
     margins { top: root.margin; bottom: root.margin; left: root.margin }
@@ -90,17 +90,11 @@ Item {
     exclusiveZone: 0
 
     ColumnLayout {
-      id: frame
+      id: leftColumn
       anchors.fill: parent
       spacing: root.margin
-      opacity: root.covered ? 0 : 1
+      opacity: leftCover.covered ? 0 : 1
       Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-      Island {
-        glass: root.glass
-        Layout.fillWidth: true
-        PlayerSection { width: parent.width; player: root.player }
-      }
 
       Island {
         glass: root.glass
@@ -133,6 +127,34 @@ Item {
         Layout.fillWidth: true
         WeatherSection { width: parent.width }
       }
+    }
+  }
+
+  // Right: Spotify, top corner.
+  PanelWindow {
+    id: rightWindow
+    screen: root.targetScreen
+    visible: root.targetScreen !== null && (!rightCover.covered || playerIsland.opacity > 0)
+    color: "transparent"
+    anchors { top: true; right: true }
+    margins { top: root.margin; right: root.margin }
+    implicitWidth: root.playerWidth
+    implicitHeight: playerIsland.implicitHeight
+
+    WlrLayershell.namespace: "kpedroc-desk"
+    WlrLayershell.layer: WlrLayer.Bottom
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    exclusionMode: ExclusionMode.Normal
+    exclusiveZone: 0
+
+    Island {
+      id: playerIsland
+      glass: root.glass
+      width: parent.width
+      height: parent.height
+      opacity: rightCover.covered ? 0 : 1
+      Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+      PlayerSection { width: parent.width; player: root.player }
     }
   }
 }
