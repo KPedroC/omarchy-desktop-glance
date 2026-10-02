@@ -54,6 +54,12 @@ Item {
         visible: status === Image.Ready
       }
 
+      MouseArea {
+        anchors.fill: parent
+        cursorShape: Qt.PointingHandCursor
+        onDoubleClicked: Quickshell.execDetached([root.togglePath])
+      }
+
       Text {
         anchors.centerIn: parent
         visible: !root.hasTrack || (root.player.trackArtUrl || "") === ""

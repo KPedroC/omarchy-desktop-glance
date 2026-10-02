@@ -2,7 +2,7 @@
 
 Desktop sidebar for Omarchy: full height on the left, above the wallpaper, below windows. Fades out while a window on the visible workspace overlaps it.
 
-- **Spotify**: large cover art, title, artist, progress, previous / play-pause / next
+- **Spotify**: large cover art (double-click to show the Spotify window), title, artist, progress, previous / play-pause / next
 - **Calendar**: month grid (Monday first, ISO week numbers) with a dot per calendar on days with events, month stepping; click a day to list its events, click the month title to jump back to today
 - **Upcoming**: upcoming meetings from your calendars (or the picked day's), grouped by day, with a Join button for Meet/Zoom/Teams links from 10 minutes before start
 - **Weather**: current conditions and a 3-day forecast from wttr.in, using Omarchy's weather location (or IP auto-detect)
