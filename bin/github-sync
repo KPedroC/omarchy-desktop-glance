@@ -1,10 +1,12 @@
 #!/usr/bin/python3
 """Fetch GitHub Actions runs for the workflows listed in
-~/.config/omarchy/desk-github and write them to
-~/.cache/omarchy-desk/github.json. Uses the gh CLI's login.
+~/.config/omarchy/desk-github, plus open pull requests that need your review
+and your own, and write them to ~/.cache/omarchy-desk/github.json. Uses the
+gh CLI's login.
 
-Sends a desktop notification when a tracked run finishes, per the line's
-notify setting (mine / all / none).
+Desktop notifications: a tracked run finishing (per the line's notify
+setting: mine / all / none), a new review request, and your PR getting
+approved or changes requested.
 """
 
 import json
@@ -41,6 +43,58 @@ def gh_api(path):
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip().splitlines()[-1] if result.stderr.strip() else "gh api failed")
     return json.loads(result.stdout)
+
+
+PULLS_QUERY = """
+query {
+  review: search(query: "is:pr is:open review-requested:@me archived:false", type: ISSUE, first: 15) {
+    nodes { ... on PullRequest { id number title url isDraft createdAt updatedAt
+      repository { nameWithOwner } author { login } } }
+  }
+  mine: search(query: "is:pr is:open author:@me archived:false sort:updated-desc", type: ISSUE, first: 15) {
+    nodes { ... on PullRequest { id number title url isDraft createdAt updatedAt reviewDecision
+      repository { nameWithOwner }
+      commits(last: 1) { nodes { commit { statusCheckRollup { state } } } } } }
+  }
+}
+"""
+
+
+def fetch_pulls():
+    result = subprocess.run(["gh", "api", "graphql", "-f", f"query={PULLS_QUERY}"],
+                            capture_output=True, text=True, timeout=30)
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip().splitlines()[-1] if result.stderr.strip() else "gh api graphql failed")
+    data = json.loads(result.stdout)["data"]
+
+    def base(node):
+        return {
+            "id": node["id"],
+            "repo": node["repository"]["nameWithOwner"],
+            "number": node["number"],
+            "title": node["title"],
+            "url": node["url"],
+            "draft": node["isDraft"],
+            "createdAt": node["createdAt"],
+            "updatedAt": node["updatedAt"],
+        }
+
+    review = [dict(base(n), author=(n.get("author") or {}).get("login", "")) for n in data["review"]["nodes"] if n]
+    mine = []
+    for n in data["mine"]["nodes"]:
+        if not n:
+            continue
+        commits = n.get("commits", {}).get("nodes") or []
+        rollup = commits[0]["commit"].get("statusCheckRollup") if commits else None
+        mine.append(dict(base(n), review=n.get("reviewDecision"), checks=(rollup or {}).get("state")))
+    # Ready PRs before drafts, most recently updated first within each.
+    mine.sort(key=lambda p: p["updatedAt"], reverse=True)
+    mine.sort(key=lambda p: p["draft"])
+    return {"review": review, "mine": mine}
+
+
+def notify_text(title, body):
+    subprocess.run(["notify-send", "-a", "GitHub", title, body], check=False)
 
 
 def parse_time(value):
@@ -115,18 +169,53 @@ def main():
     finished = sorted([r for r in runs if r["status"] == "completed"], key=lambda r: r["endedAt"], reverse=True)
     runs = (running + finished)[:MAX_RUNS]
 
-    # Notify for runs that were running last sync and have finished since.
     try:
-        previous = set(json.loads(STATE.read_text()).get("running", []))
+        pulls = fetch_pulls()
+    except Exception as error:
+        errors.append({"repo": "pull requests", "error": str(error)})
+        pulls = None
+
+    try:
+        state = json.loads(STATE.read_text())
     except (OSError, ValueError):
-        previous = set()
+        state = {}
+
+    # Runs that were running last sync and have finished since.
+    previous = set(state.get("running", []))
     for run in finished:
         if run["id"] in previous and (run["notify"] == "all" or (run["notify"] == "mine" and run["mine"])):
             notify(run)
-    write_json(STATE, {"running": [r["id"] for r in running]})
+    state["running"] = [r["id"] for r in running]
 
-    write_json(OUTPUT, {"updatedAt": now.isoformat(), "errors": errors, "runs": runs, "anyRunning": bool(running)})
-    print(f"{len(running)} running, {len(finished)} recent, {len(errors)} errors")
+    # PR changes since last sync; the first sync only records state.
+    if pulls is not None:
+        known_reviews = state.get("reviews")
+        decisions = state.get("decisions")
+        if known_reviews is not None:
+            for pr in pulls["review"]:
+                if pr["id"] not in known_reviews:
+                    notify_text("󰳏 Review requested", f"{pr['title']}\n{pr['repo']} #{pr['number']} · {pr['author']}")
+        if decisions is not None:
+            for pr in pulls["mine"]:
+                before, after = decisions.get(pr["id"]), pr["review"]
+                if after != before and after in ("APPROVED", "CHANGES_REQUESTED"):
+                    label = "✓ PR approved" if after == "APPROVED" else "✗ Changes requested"
+                    notify_text(label, f"{pr['title']}\n{pr['repo']} #{pr['number']}")
+        state["reviews"] = [pr["id"] for pr in pulls["review"]]
+        state["decisions"] = {pr["id"]: pr["review"] for pr in pulls["mine"]}
+    write_json(STATE, state)
+
+    payload = {"updatedAt": now.isoformat(), "errors": errors, "runs": runs, "anyRunning": bool(running)}
+    if pulls is not None:
+        payload["pulls"] = pulls
+    elif OUTPUT.exists():
+        try:
+            payload["pulls"] = json.loads(OUTPUT.read_text()).get("pulls")
+        except ValueError:
+            pass
+    write_json(OUTPUT, payload)
+    print(f"{len(running)} running, {len(finished)} recent, "
+          f"{len(pulls['review']) if pulls else '?'} to review, {len(pulls['mine']) if pulls else '?'} mine, {len(errors)} errors")
     return 0
 
 

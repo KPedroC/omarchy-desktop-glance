@@ -1,9 +1,8 @@
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import qs.Commons
 
-// Tracked GitHub Actions runs from bin/github-sync: running ones first with
+// Tracked GitHub Actions runs: running ones first with
 // progress against the workflow's typical duration, then recent results.
 Item {
   id: root
@@ -13,14 +12,11 @@ Item {
   readonly property color passColor: Color.accent
   readonly property color failColor: Color.urgent
   readonly property string fontFamily: Style.font.family
-  readonly property string syncPath: decodeURIComponent(Qt.resolvedUrl("bin/github-sync").toString().replace("file://", ""))
+  property var model: null
 
-  property var feed: null
-  property var now: new Date()
-
-  readonly property var runs: feed && feed.runs ? feed.runs : []
-  readonly property var errors: feed && feed.errors ? feed.errors : []
-  readonly property bool anyRunning: feed !== null && feed.anyRunning === true
+  readonly property var now: model ? model.now : new Date()
+  readonly property var runs: model ? model.runs : []
+  readonly property var errors: model ? model.errors.filter(function(e) { return e.repo !== "pull requests" }) : []
   readonly property int runningCount: runs.filter(function(r) { return r.status !== "completed" }).length
 
   implicitHeight: content.implicitHeight
@@ -33,14 +29,6 @@ Item {
     return s + "s"
   }
 
-  function ago(iso) {
-    var mins = Math.max(0, Math.round((now - new Date(iso)) / 60000))
-    if (mins < 1) return "just now"
-    if (mins < 60) return mins + "m ago"
-    var hours = Math.floor(mins / 60)
-    return hours < 24 ? hours + "h ago" : Math.floor(hours / 24) + "d ago"
-  }
-
   function elapsed(run) {
     return run.startedAt ? (now - new Date(run.startedAt)) / 1000 : 0
   }
@@ -51,42 +39,7 @@ Item {
       return duration(elapsed(run)) + (run.typicalSeconds ? " / ~" + duration(run.typicalSeconds) : "")
     }
     var took = run.startedAt && run.endedAt ? duration((new Date(run.endedAt) - new Date(run.startedAt)) / 1000) : ""
-    return took + " · " + ago(run.endedAt)
-  }
-
-  function sync() {
-    if (!syncProc.running) syncProc.running = true
-  }
-
-  FileView {
-    path: Quickshell.env("HOME") + "/.cache/omarchy-desk/github.json"
-    watchChanges: true
-    printErrors: false
-    onFileChanged: reload()
-    onLoaded: {
-      try { root.feed = JSON.parse(text()) } catch (e) { root.feed = null }
-    }
-  }
-
-  Process {
-    id: syncProc
-    command: [root.syncPath]
-  }
-
-  // Every minute while something runs, otherwise every 5 minutes.
-  Timer {
-    interval: root.anyRunning ? 60000 : 5 * 60000
-    repeat: true
-    running: true
-    triggeredOnStart: true
-    onTriggered: root.sync()
-  }
-
-  Timer {
-    interval: root.anyRunning ? 1000 : 30000
-    repeat: true
-    running: true
-    onTriggered: root.now = new Date()
+    return took + " · " + root.model.ago(run.endedAt)
   }
 
   Column {
@@ -124,10 +77,10 @@ Item {
         size: 24
         glyph: "󰑐"
         foreground: root.dim
-        onClicked: root.sync()
+        onClicked: if (root.model) root.model.sync()
 
         RotationAnimation on rotation {
-          running: syncProc.running
+          running: root.model !== null && root.model.syncing
           loops: Animation.Infinite
           from: 0
           to: 360
@@ -138,7 +91,7 @@ Item {
     }
 
     Text {
-      visible: root.feed !== null && root.runs.length === 0
+      visible: root.model !== null && root.model.feed !== null && root.runs.length === 0
       text: "No runs in the last 24 hours"
       color: root.dim
       font.family: root.fontFamily
