@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 """Fetch the calendars in ~/.config/omarchy/desk-calendars and write the
 next days of events to ~/.cache/omarchy-desk/events.json.
 
