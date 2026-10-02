@@ -5,7 +5,8 @@ next days of events to ~/.cache/omarchy-desk/events.json.
 Sources are iCal feed URLs, or `google:<calendar id>` read through the
 Google Calendar API with OAuth.
 
-  calendar-sync           sync
+  calendar-sync           sync (Google calendars at most every 15 minutes)
+  calendar-sync --force   sync everything now
   calendar-sync --login   authorize Google Calendar access (opens the browser)
   calendar-sync --list    list Google calendars and their ids
 
@@ -36,6 +37,9 @@ CONFIG = Path.home() / ".config/omarchy/desk-calendars"
 OUTPUT = Path.home() / ".cache/omarchy-desk/events.json"
 GOOGLE_CLIENT = Path.home() / ".config/omarchy/desk-google-client.json"
 GOOGLE_TOKEN = Path.home() / ".local/state/omarchy-desk/google-token.json"
+GOOGLE_ACCESS = Path.home() / ".local/state/omarchy-desk/google-access.json"
+GOOGLE_CACHE = Path.home() / ".cache/omarchy-desk/google-cache.json"
+GOOGLE_INTERVAL = timedelta(minutes=15)
 GOOGLE_SCOPE = "https://www.googleapis.com/auth/calendar.readonly"
 DAYS = 7
 MEETING_LINK = re.compile(r"https://(?:[\w-]+\.)?(?:meet\.google\.com|zoom\.us|teams\.microsoft\.com|teams\.live\.com)/[^\s\"<>\\]+")
@@ -160,6 +164,14 @@ def google_access_token():
     global _access_token
     if _access_token:
         return _access_token
+    # Access tokens last an hour; reuse one until shortly before it expires.
+    try:
+        cached = json.loads(GOOGLE_ACCESS.read_text())
+        if datetime.fromisoformat(cached["expiresAt"]) > datetime.now().astimezone() + timedelta(minutes=2):
+            _access_token = cached["accessToken"]
+            return _access_token
+    except (OSError, ValueError, KeyError):
+        pass
     if not GOOGLE_TOKEN.exists():
         raise FeedError("not logged in (calendar-sync --login)")
     client = google_client()
@@ -170,6 +182,8 @@ def google_access_token():
         "grant_type": "refresh_token",
     })
     _access_token = token["access_token"]
+    expires = datetime.now().astimezone() + timedelta(seconds=int(token.get("expires_in", 3600)))
+    write_private(GOOGLE_ACCESS, {"accessToken": _access_token, "expiresAt": expires.isoformat()})
     return _access_token
 
 
@@ -202,6 +216,27 @@ def google_meeting_link(item):
         if match:
             return match.group(0)
     return ""
+
+
+def load_google_cache():
+    try:
+        return json.loads(GOOGLE_CACHE.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+# Google calendars are fetched at most every GOOGLE_INTERVAL; in between the
+# last result is reused. Cache entries are keyed by calendar id and window start.
+def cached_google_events(calendar, start, end, cache, force):
+    key = f"{calendar['url']}|{start.date().isoformat()}"
+    entry = cache.get(key)
+    if entry and not force:
+        fetched = datetime.fromisoformat(entry["fetchedAt"])
+        if datetime.now().astimezone() - fetched < GOOGLE_INTERVAL:
+            return [dict(e, calendar=calendar["label"], color=calendar["color"]) for e in entry["events"]]
+    events = list(google_events(calendar, start, end))
+    cache[key] = {"fetchedAt": datetime.now().astimezone().isoformat(), "events": events}
+    return events
 
 
 def google_events(calendar, start, end):
@@ -253,9 +288,9 @@ def meeting_link(event):
     return ""
 
 
-def events_for(calendar, start, end):
+def events_for(calendar, start, end, cache, force):
     if calendar["url"].startswith("google:"):
-        yield from google_events(calendar, start, end)
+        yield from cached_google_events(calendar, start, end, cache, force)
         return
     ical = icalendar.Calendar.from_ical(fetch(calendar["url"]))
     for event in recurring_ical_events.of(ical).between(start, end):
@@ -283,13 +318,17 @@ def main():
     if "--list" in sys.argv:
         return google_list()
 
+    force = "--force" in sys.argv
     start = datetime.combine(date.today(), time.min).astimezone()
     end = start + timedelta(days=DAYS)
     events, seen, errors = [], set(), []
+    calendars = read_config()
+    cache = load_google_cache()
+    live_keys = {f"{c['url']}|{start.date().isoformat()}" for c in calendars if c["url"].startswith("google:")}
 
-    for calendar in read_config():
+    for calendar in calendars:
         try:
-            for event in events_for(calendar, start, end):
+            for event in events_for(calendar, start, end, cache, force):
                 key = (event["uid"], event["start"]) if event["uid"] else (event["title"], event["start"])
                 if key in seen:
                     continue
@@ -301,9 +340,12 @@ def main():
             # Only the label and error type: messages can contain the URL.
             errors.append({"calendar": calendar["label"], "error": type(error).__name__})
 
+    if live_keys or cache:
+        write_private(GOOGLE_CACHE, {k: v for k, v in cache.items() if k in live_keys})
+
     events.sort(key=lambda e: (e["start"], not e["allDay"]))
     for event in events:
-        del event["uid"]
+        event.pop("uid", None)
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     payload = {"updatedAt": datetime.now().astimezone().isoformat(), "errors": errors, "events": events}

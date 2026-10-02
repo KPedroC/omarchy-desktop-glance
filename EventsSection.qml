@@ -64,8 +64,10 @@ Item {
     return !row.event.allDay && row.event.link !== "" && now >= new Date(row.start - 600000) && now < row.end
   }
 
-  function sync() {
-    if (!syncProc.running) syncProc.running = true
+  function sync(force) {
+    if (syncProc.running) return
+    syncProc.command = force ? [root.syncPath, "--force"] : [root.syncPath]
+    syncProc.running = true
   }
 
   FileView {
@@ -80,7 +82,6 @@ Item {
 
   Process {
     id: syncProc
-    command: [root.syncPath]
   }
 
   Timer {
@@ -88,7 +89,7 @@ Item {
     repeat: true
     running: true
     triggeredOnStart: true
-    onTriggered: root.sync()
+    onTriggered: root.sync(false)
   }
 
   Timer {
@@ -115,8 +116,44 @@ Item {
         font.bold: true
       }
 
-      Text {
+      Rectangle {
+        id: reloadButton
         anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        width: 24
+        height: 24
+        radius: 12
+        color: reloadMouse.containsMouse ? Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.12) : "transparent"
+
+        Text {
+          anchors.centerIn: parent
+          text: "󰑐"
+          color: root.dim
+          font.family: root.fontFamily
+          font.pixelSize: 14
+
+          RotationAnimation on rotation {
+            running: syncProc.running
+            loops: Animation.Infinite
+            from: 0
+            to: 360
+            duration: 900
+            onRunningChanged: if (!running) parent.rotation = 0
+          }
+        }
+
+        MouseArea {
+          id: reloadMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: root.sync(true)
+        }
+      }
+
+      Text {
+        anchors.right: reloadButton.left
+        anchors.rightMargin: 6
         anchors.verticalCenter: parent.verticalCenter
         visible: root.errors.length > 0
         text: "󰀦 " + root.errors.map(function(e) { return e.calendar }).join(", ")

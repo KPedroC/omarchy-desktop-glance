@@ -47,7 +47,7 @@ Google calendars that block secret iCal links (e.g. Workspace accounts) can use 
 
 The refresh token lives in `~/.local/state/omarchy-desk/google-token.json`; declined meetings are skipped.
 
-`bin/calendar-sync` runs every 5 minutes and writes `~/.cache/omarchy-desk/events.json`. It never prints or logs feed URLs.
+`bin/calendar-sync` runs every 5 minutes (Google API calendars at most every 15, reusing the access token for its hour; the ↻ button forces a full sync) and writes `~/.cache/omarchy-desk/events.json`. It never prints or logs feed URLs.
 Requires `python-recurring-ical-events` (`sudo pacman -S python-recurring-ical-events`).
 
 ## Config
