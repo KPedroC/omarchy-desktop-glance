@@ -37,6 +37,16 @@ work     #4f9d69  https://calendar.google.com/calendar/ical/.../basic.ics
 private  #7aa2f7  https://...
 ```
 
+Google calendars that block secret iCal links (e.g. Workspace accounts) can use the Calendar API instead:
+
+1. Google Cloud Console (signed in with that account): create a project, enable the Google Calendar API
+2. OAuth consent screen: user type **Internal** (Workspace), so the login never expires
+3. Credentials → Create OAuth client ID → **Desktop app** → download JSON to `~/.config/omarchy/desk-google-client.json`
+4. `bin/calendar-sync --login` (opens the browser once), then `bin/calendar-sync --list` for calendar ids
+5. Add lines like `work  #4f9d69  google:primary` to `desk-calendars`
+
+The refresh token lives in `~/.local/state/omarchy-desk/google-token.json`; declined meetings are skipped.
+
 `bin/calendar-sync` runs every 5 minutes and writes `~/.cache/omarchy-desk/events.json`. It never prints or logs feed URLs.
 Requires `python-recurring-ical-events` (`sudo pacman -S python-recurring-ical-events`).
 
