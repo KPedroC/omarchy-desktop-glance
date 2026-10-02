@@ -1,0 +1,134 @@
+#!/usr/bin/python3
+"""Fetch GitHub Actions runs for the workflows listed in
+~/.config/omarchy/desk-github and write them to
+~/.cache/omarchy-desk/github.json. Uses the gh CLI's login.
+
+Sends a desktop notification when a tracked run finishes, per the line's
+notify setting (mine / all / none).
+"""
+
+import json
+import os
+import re
+import statistics
+import subprocess
+import sys
+import tempfile
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+CONFIG = Path.home() / ".config/omarchy/desk-github"
+OUTPUT = Path.home() / ".cache/omarchy-desk/github.json"
+STATE = Path.home() / ".cache/omarchy-desk/github-state.json"
+RECENT = timedelta(hours=24)
+MAX_RUNS = 6
+
+
+def read_config():
+    rules = []
+    for line in CONFIG.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split(None, 2)
+        if len(parts) == 3 and parts[1] in ("mine", "all", "none"):
+            rules.append({"repo": parts[0], "notify": parts[1], "pattern": re.compile(parts[2])})
+    return rules
+
+
+def gh_api(path):
+    result = subprocess.run(["gh", "api", path], capture_output=True, text=True, timeout=30)
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip().splitlines()[-1] if result.stderr.strip() else "gh api failed")
+    return json.loads(result.stdout)
+
+
+def parse_time(value):
+    return datetime.fromisoformat(value.replace("Z", "+00:00")) if value else None
+
+
+def write_json(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile("w", dir=path.parent, delete=False) as tmp:
+        json.dump(data, tmp)
+    os.replace(tmp.name, path)
+
+
+def notify(run):
+    passed = run["conclusion"] == "success"
+    icon = "✓" if passed else "✗"
+    verb = "passed" if passed else (run["conclusion"] or "finished")
+    subprocess.run(["notify-send", "-a", "GitHub", f"{icon} {run['workflow']} {verb}",
+                    f"{run['title']}\n{run['repo']} · {run['branch']}"], check=False)
+
+
+def main():
+    rules = read_config()
+    me = gh_api("user")["login"]
+    now = datetime.now(timezone.utc)
+    runs, errors = [], []
+
+    for repo in sorted({r["repo"] for r in rules}):
+        repo_rules = [r for r in rules if r["repo"] == repo]
+        try:
+            data = gh_api(f"/repos/{repo}/actions/runs?per_page=60")
+        except Exception as error:
+            errors.append({"repo": repo, "error": str(error)})
+            continue
+
+        # Typical duration per workflow, from its recent successful runs.
+        durations = {}
+        for item in data.get("workflow_runs", []):
+            if item.get("conclusion") == "success":
+                started, ended = parse_time(item.get("run_started_at")), parse_time(item.get("updated_at"))
+                if started and ended:
+                    durations.setdefault(item["name"], []).append((ended - started).total_seconds())
+
+        for item in data.get("workflow_runs", []):
+            rule = next((r for r in repo_rules if r["pattern"].search(item["name"])), None)
+            if not rule:
+                continue
+            started = parse_time(item.get("run_started_at") or item.get("created_at"))
+            ended = parse_time(item.get("updated_at"))
+            running = item["status"] != "completed"
+            if not running and (not ended or now - ended > RECENT):
+                continue
+            actors = {(item.get("actor") or {}).get("login"), (item.get("triggering_actor") or {}).get("login")}
+            typical = durations.get(item["name"])
+            runs.append({
+                "id": item["id"],
+                "repo": repo,
+                "workflow": item["name"],
+                "title": item.get("display_title", ""),
+                "branch": item.get("head_branch") or "",
+                "url": item["html_url"],
+                "status": item["status"],
+                "conclusion": item.get("conclusion"),
+                "startedAt": started.isoformat() if started else None,
+                "endedAt": None if running else ended.isoformat(),
+                "typicalSeconds": int(statistics.median(typical[:10])) if typical else None,
+                "mine": me in actors,
+                "notify": rule["notify"],
+            })
+
+    running = [r for r in runs if r["status"] != "completed"]
+    finished = sorted([r for r in runs if r["status"] == "completed"], key=lambda r: r["endedAt"], reverse=True)
+    runs = (running + finished)[:MAX_RUNS]
+
+    # Notify for runs that were running last sync and have finished since.
+    try:
+        previous = set(json.loads(STATE.read_text()).get("running", []))
+    except (OSError, ValueError):
+        previous = set()
+    for run in finished:
+        if run["id"] in previous and (run["notify"] == "all" or (run["notify"] == "mine" and run["mine"])):
+            notify(run)
+    write_json(STATE, {"running": [r["id"] for r in running]})
+
+    write_json(OUTPUT, {"updatedAt": now.isoformat(), "errors": errors, "runs": runs, "anyRunning": bool(running)})
+    print(f"{len(running)} running, {len(finished)} recent, {len(errors)} errors")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -74,7 +74,7 @@ Item {
     rectHeight: 40 + root.margin + rightColumn.implicitHeight
   }
 
-  // Left: calendar, events, weather.
+  // Left: calendar, GitHub Actions, events, weather.
   PanelWindow {
     screen: root.targetScreen
     visible: root.targetScreen !== null && (!leftCover.covered || leftColumn.opacity > 0)
@@ -107,6 +107,12 @@ Item {
             root.selectedDate = root.selectedDate && events.sameDay(root.selectedDate, date) ? null : date
           }
         }
+      }
+
+      Island {
+        glass: root.glass
+        Layout.fillWidth: true
+        GithubSection { width: parent.width }
       }
 
       Island {
