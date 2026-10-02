@@ -11,7 +11,7 @@ import "Spotify.js" as Spotify
 // (weather, calendar, events, pull requests, GitHub Actions) and Spotify
 // top-right. Both sit on
 // the Bottom layer (above the wallpaper, below windows) and fade out while a
-// window on the visible workspace overlaps them.
+// window on the visible workspace overlaps them, or while the bar is hidden.
 Item {
   id: root
 
@@ -26,6 +26,11 @@ Item {
   readonly property int rightWidth: 340
   // Island background opacity (0 = clear glass, 1 = solid).
   readonly property real glass: 0.35
+
+  // Hidden together with the bar (SUPER + SHIFT + SPACE).
+  readonly property bool barHidden: shell && shell.bar ? shell.bar.barHidden === true : false
+  readonly property bool leftShown: !barHidden && !leftCover.covered
+  readonly property bool rightShown: !barHidden && !rightCover.covered
 
   // Date picked in the calendar; null shows upcoming events.
   property var selectedDate: null
@@ -79,7 +84,7 @@ Item {
   // Left: weather, calendar, events, pull requests, GitHub Actions.
   PanelWindow {
     screen: root.targetScreen
-    visible: root.targetScreen !== null && (!leftCover.covered || leftColumn.opacity > 0)
+    visible: root.targetScreen !== null && (root.leftShown || leftColumn.opacity > 0)
     color: "transparent"
     anchors { top: true; bottom: true; left: true }
     margins { top: root.margin; bottom: root.margin; left: root.margin }
@@ -95,7 +100,7 @@ Item {
       id: leftColumn
       anchors.fill: parent
       spacing: root.margin
-      opacity: leftCover.covered ? 0 : 1
+      opacity: root.leftShown ? 1 : 0
       Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
       Island {
@@ -148,7 +153,7 @@ Item {
   PanelWindow {
     id: rightWindow
     screen: root.targetScreen
-    visible: root.targetScreen !== null && (!rightCover.covered || rightColumn.opacity > 0)
+    visible: root.targetScreen !== null && (root.rightShown || rightColumn.opacity > 0)
     color: "transparent"
     anchors { top: true; right: true }
     margins { top: root.margin; right: root.margin }
@@ -165,7 +170,7 @@ Item {
       id: rightColumn
       anchors.fill: parent
       spacing: root.margin
-      opacity: rightCover.covered ? 0 : 1
+      opacity: root.rightShown ? 1 : 0
       Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
       Island {
