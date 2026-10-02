@@ -1,12 +1,11 @@
 #!/usr/bin/python3
 """Fetch GitHub Actions runs for the workflows listed in
-~/.config/omarchy/desk-github, plus open pull requests that need your review
-and your own, and write them to ~/.cache/omarchy-desk/github.json. Uses the
+~/.config/omarchy/desk-github, plus your open pull requests with their
+latest reviews/comments and unread state, and write them to ~/.cache/omarchy-desk/github.json. Uses the
 gh CLI's login.
 
 Desktop notifications: a tracked run finishing (per the line's notify
-setting: mine / all / none), a new review request, and your PR getting
-approved or changes requested.
+setting: mine / all / none) and new reviews or comments on your PRs.
 """
 
 import json
@@ -47,50 +46,95 @@ def gh_api(path):
 
 PULLS_QUERY = """
 query {
-  review: search(query: "is:pr is:open review-requested:@me archived:false", type: ISSUE, first: 15) {
-    nodes { ... on PullRequest { id number title url isDraft createdAt updatedAt
-      repository { nameWithOwner } author { login } } }
-  }
   mine: search(query: "is:pr is:open author:@me archived:false sort:updated-desc", type: ISSUE, first: 15) {
-    nodes { ... on PullRequest { id number title url isDraft createdAt updatedAt reviewDecision
+    nodes { ... on PullRequest { id number title url isDraft createdAt updatedAt reviewDecision mergeable
       repository { nameWithOwner }
-      commits(last: 1) { nodes { commit { statusCheckRollup { state } } } } } }
+      commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }
+      timelineItems(last: 10, itemTypes: [PULL_REQUEST_REVIEW, ISSUE_COMMENT]) { nodes { __typename
+        ... on PullRequestReview { id state submittedAt author { login __typename } }
+        ... on IssueComment { id createdAt author { login __typename } } } } } }
   }
 }
 """
 
+EVENT_VERBS = {"APPROVED": "approved", "CHANGES_REQUESTED": "requested changes", "COMMENTED": "reviewed", "COMMENT": "commented"}
+# Unread notification reasons that mean someone did something on your PR.
+ACTIVITY_REASONS = {"author", "comment", "mention", "state_change", "manual", "subscribed"}
 
-def fetch_pulls():
+
+def unread_pull_keys():
+    """(repo, number) of your PRs with unread activity notifications."""
+    result = subprocess.run(["gh", "api", "notifications?per_page=100"], capture_output=True, text=True, timeout=30)
+    if result.returncode != 0:
+        return set()
+    keys = set()
+    for n in json.loads(result.stdout):
+        subject = n.get("subject") or {}
+        if subject.get("type") == "PullRequest" and n.get("reason") in ACTIVITY_REASONS and subject.get("url"):
+            keys.add((n["repository"]["full_name"], int(subject["url"].rsplit("/", 1)[-1])))
+    return keys
+
+
+def fetch_pulls(me):
     result = subprocess.run(["gh", "api", "graphql", "-f", f"query={PULLS_QUERY}"],
                             capture_output=True, text=True, timeout=30)
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip().splitlines()[-1] if result.stderr.strip() else "gh api graphql failed")
-    data = json.loads(result.stdout)["data"]
+    nodes = json.loads(result.stdout)["data"]["mine"]["nodes"]
+    unread = unread_pull_keys()
 
-    def base(node):
-        return {
-            "id": node["id"],
-            "repo": node["repository"]["nameWithOwner"],
-            "number": node["number"],
-            "title": node["title"],
-            "url": node["url"],
-            "draft": node["isDraft"],
-            "createdAt": node["createdAt"],
-            "updatedAt": node["updatedAt"],
-        }
-
-    review = [dict(base(n), author=(n.get("author") or {}).get("login", "")) for n in data["review"]["nodes"] if n]
     mine = []
-    for n in data["mine"]["nodes"]:
+    for n in nodes:
         if not n:
             continue
         commits = n.get("commits", {}).get("nodes") or []
         rollup = commits[0]["commit"].get("statusCheckRollup") if commits else None
-        mine.append(dict(base(n), review=n.get("reviewDecision"), checks=(rollup or {}).get("state")))
-    # Ready PRs before drafts, most recently updated first within each.
-    mine.sort(key=lambda p: p["updatedAt"], reverse=True)
-    mine.sort(key=lambda p: p["draft"])
-    return {"review": review, "mine": mine}
+        # Reviews and comments by people other than you (bots ignored).
+        events = []
+        for item in (n.get("timelineItems") or {}).get("nodes") or []:
+            author = item.get("author") or {}
+            if not author or author.get("__typename") == "Bot" or author.get("login") == me:
+                continue
+            kind = item.get("state") if item["__typename"] == "PullRequestReview" else "COMMENT"
+            if kind not in EVENT_VERBS:
+                continue
+            events.append({"id": item["id"], "author": author["login"], "kind": kind,
+                           "verb": EVENT_VERBS[kind], "at": item.get("submittedAt") or item.get("createdAt")})
+        repo = n["repository"]["nameWithOwner"]
+        mine.append({
+            "id": n["id"],
+            "repo": repo,
+            "number": n["number"],
+            "title": n["title"],
+            "url": n["url"],
+            "draft": n["isDraft"],
+            "createdAt": n["createdAt"],
+            "updatedAt": n["updatedAt"],
+            "review": n.get("reviewDecision"),
+            "checks": (rollup or {}).get("state"),
+            "conflicts": n.get("mergeable") == "CONFLICTING",
+            "lastEvent": events[-1] if events else None,
+            "events": events,
+            "unread": (repo, n["number"]) in unread,
+        })
+    for pr in mine:
+        pr["ready"] = (not pr["draft"] and pr["review"] == "APPROVED"
+                       and pr["checks"] in ("SUCCESS", None) and not pr["conflicts"])
+
+    # What needs you first: unread activity, ready to merge, changes
+    # requested, the rest; drafts last; most recent activity within each.
+    def rank(pr):
+        if pr["draft"]:
+            return 4
+        if pr["unread"]:
+            return 0
+        if pr["ready"]:
+            return 1
+        return 2 if pr["review"] == "CHANGES_REQUESTED" else 3
+
+    mine.sort(key=lambda p: (p["lastEvent"] or {}).get("at") or p["updatedAt"], reverse=True)
+    mine.sort(key=rank)
+    return {"mine": mine}
 
 
 def notify_text(title, body):
@@ -170,7 +214,7 @@ def main():
     runs = (running + finished)[:MAX_RUNS]
 
     try:
-        pulls = fetch_pulls()
+        pulls = fetch_pulls(me)
     except Exception as error:
         errors.append({"repo": "pull requests", "error": str(error)})
         pulls = None
@@ -187,22 +231,20 @@ def main():
             notify(run)
     state["running"] = [r["id"] for r in running]
 
-    # PR changes since last sync; the first sync only records state.
+    # New reviews/comments on your PRs since last sync; the first sync only
+    # records what's there.
     if pulls is not None:
-        known_reviews = state.get("reviews")
-        decisions = state.get("decisions")
-        if known_reviews is not None:
-            for pr in pulls["review"]:
-                if pr["id"] not in known_reviews:
-                    notify_text("󰳏 Review requested", f"{pr['title']}\n{pr['repo']} #{pr['number']} · {pr['author']}")
-        if decisions is not None:
+        seen = state.get("events")
+        current = {e["id"] for pr in pulls["mine"] for e in pr["events"]}
+        if seen is not None:
             for pr in pulls["mine"]:
-                before, after = decisions.get(pr["id"]), pr["review"]
-                if after != before and after in ("APPROVED", "CHANGES_REQUESTED"):
-                    label = "✓ PR approved" if after == "APPROVED" else "✗ Changes requested"
-                    notify_text(label, f"{pr['title']}\n{pr['repo']} #{pr['number']}")
-        state["reviews"] = [pr["id"] for pr in pulls["review"]]
-        state["decisions"] = {pr["id"]: pr["review"] for pr in pulls["mine"]}
+                for e in pr["events"]:
+                    if e["id"] not in seen:
+                        icon = {"APPROVED": "✓", "CHANGES_REQUESTED": "✗"}.get(e["kind"], "󰅺")
+                        notify_text(f"{icon} {e['author']} {e['verb']}", f"{pr['title']}\n{pr['repo']} #{pr['number']}")
+        state["events"] = sorted(current | set(seen or []))[-500:]
+        state.pop("reviews", None)
+        state.pop("decisions", None)
     write_json(STATE, state)
 
     payload = {"updatedAt": now.isoformat(), "errors": errors, "runs": runs, "anyRunning": bool(running)}
@@ -215,7 +257,7 @@ def main():
             pass
     write_json(OUTPUT, payload)
     print(f"{len(running)} running, {len(finished)} recent, "
-          f"{len(pulls['review']) if pulls else '?'} to review, {len(pulls['mine']) if pulls else '?'} mine, {len(errors)} errors")
+          f"{len(pulls['mine']) if pulls else '?'} open PRs, {len(errors)} errors")
     return 0
 
 

@@ -16,7 +16,6 @@ Item {
 
   readonly property var runs: feed && feed.runs ? feed.runs : []
   readonly property var errors: feed && feed.errors ? feed.errors : []
-  readonly property var reviewPulls: feed && feed.pulls ? feed.pulls.review : []
   readonly property var myPulls: feed && feed.pulls ? feed.pulls.mine : []
   readonly property bool anyRunning: feed !== null && feed.anyRunning === true
   readonly property bool syncing: syncProc.running

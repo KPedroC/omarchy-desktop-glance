@@ -2,14 +2,13 @@ import QtQuick
 import Quickshell
 import qs.Commons
 
-// Open pull requests: ones waiting on your review, then your own with their
-// review state and checks. Click a row to open it.
+// Your open pull requests, what needs you first: unread reviews/comments,
+// ready to merge, changes requested. Click a row to open it.
 Item {
   id: root
 
   property var model: null
-  property int maxReview: 3
-  property int maxMine: 4
+  property int maxMine: 3
 
   readonly property color fg: Color.popups.text
   readonly property color dim: Qt.darker(fg, 1.55)
@@ -17,8 +16,8 @@ Item {
   readonly property color failColor: Color.urgent
   readonly property string fontFamily: Style.font.family
 
-  readonly property var review: model ? model.reviewPulls : []
   readonly property var mine: model ? model.myPulls : []
+  readonly property int unreadCount: mine.filter(function(p) { return p.unread }).length
   readonly property bool failed: model !== null && model.errors.some(function(e) { return e.repo === "pull requests" })
 
   implicitHeight: content.implicitHeight
@@ -29,6 +28,8 @@ Item {
 
   function reviewLabel(pr) {
     if (pr.draft) return "Draft"
+    if (pr.conflicts) return "Conflicts"
+    if (pr.ready) return "Ready to merge"
     if (pr.review === "APPROVED") return "Approved"
     if (pr.review === "CHANGES_REQUESTED") return "Changes requested"
     if (pr.review === "REVIEW_REQUIRED") return "Awaiting review"
@@ -37,9 +38,15 @@ Item {
 
   function reviewColor(pr) {
     if (pr.draft) return dim
+    if (pr.conflicts) return failColor
     if (pr.review === "APPROVED") return passColor
     if (pr.review === "CHANGES_REQUESTED") return failColor
     return dim
+  }
+
+  function activity(pr) {
+    var e = pr.lastEvent
+    return e ? e.author + " " + e.verb + " · " + root.model.ago(e.at) : repoName(pr)
   }
 
   function checksGlyph(pr) {
@@ -77,44 +84,44 @@ Item {
         font.bold: true
       }
 
-      Text {
+      Row {
         anchors.right: parent.right
+        anchors.rightMargin: 6
         anchors.verticalCenter: parent.verticalCenter
-        visible: root.failed
-        text: "󰀦 offline"
-        color: root.failColor
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.caption
+        spacing: Style.spacing.lg
+
+        Text {
+          visible: root.failed
+          text: "󰀦 offline"
+          color: root.failColor
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.caption
+        }
+
+        Text {
+          visible: root.unreadCount > 0
+          text: "● " + root.unreadCount + " new"
+          color: Color.accent
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.caption
+        }
+
+        Text {
+          visible: root.mine.length > 0
+          text: root.mine.length + (root.mine.length > root.maxMine ? "  ·  all 󰁔" : "")
+          color: allMouse.containsMouse ? root.fg : root.dim
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.caption
+
+          MouseArea {
+            id: allMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.open("https://github.com/pulls")
+          }
+        }
       }
-    }
-
-    GroupHeader {
-      visible: root.review.length > 0
-      label: "Needs your review"
-      count: root.review.length
-      limit: root.maxReview
-      url: "https://github.com/pulls/review-requested"
-    }
-
-    Repeater {
-      model: root.review.slice(0, root.maxReview)
-
-      PullRow {
-        required property var modelData
-        glyph: "󰳏"
-        glyphColor: Color.accent
-        title: modelData.title
-        detail: root.repoName(modelData) + "  ·  " + modelData.author + "  ·  " + root.model.ago(modelData.createdAt)
-        url: modelData.url
-      }
-    }
-
-    GroupHeader {
-      visible: root.mine.length > 0
-      label: "Yours"
-      count: root.mine.length
-      limit: root.maxMine
-      url: "https://github.com/pulls"
     }
 
     Repeater {
@@ -128,7 +135,8 @@ Item {
         spinning: modelData.checks === "PENDING" || modelData.checks === "EXPECTED"
         dimmed: modelData.draft
         title: modelData.title
-        detail: root.repoName(modelData)
+        unread: modelData.unread
+        detail: root.activity(modelData)
         statusText: root.reviewLabel(modelData)
         statusColor: root.reviewColor(modelData)
         url: modelData.url
@@ -136,49 +144,11 @@ Item {
     }
 
     Text {
-      visible: root.model !== null && root.model.feed !== null && root.review.length === 0 && root.mine.length === 0
+      visible: root.model !== null && root.model.feed !== null && root.mine.length === 0
       text: "No open pull requests"
       color: root.dim
       font.family: root.fontFamily
       font.pixelSize: Style.font.body
-    }
-  }
-
-  // "Needs your review · 2" with a "+N more" link when the list is cut short.
-  component GroupHeader: Item {
-    id: group
-    property string label: ""
-    property int count: 0
-    property int limit: 0
-    property string url: ""
-
-    width: root.width
-    height: 22
-
-    Text {
-      anchors.bottom: parent.bottom
-      text: group.label
-      color: root.dim
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.caption
-    }
-
-    Text {
-      anchors.right: parent.right
-      anchors.rightMargin: 6
-      anchors.bottom: parent.bottom
-      text: group.count + (group.count > group.limit ? "  ·  all 󰁔" : "")
-      color: moreMouse.containsMouse ? root.fg : root.dim
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.caption
-
-      MouseArea {
-        id: moreMouse
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.open(group.url)
-      }
     }
   }
 
@@ -188,6 +158,7 @@ Item {
     property color glyphColor: root.dim
     property bool spinning: false
     property bool dimmed: false
+    property bool unread: false
     property string title: ""
     property string detail: ""
     property string statusText: ""
@@ -225,14 +196,27 @@ Item {
       id: titleText
       anchors.left: icon.right
       anchors.leftMargin: 8
-      anchors.right: parent.right
+      anchors.right: unreadDot.visible ? unreadDot.left : parent.right
       anchors.rightMargin: 6
       y: 4
       text: row.title
       color: root.fg
       font.family: root.fontFamily
       font.pixelSize: Style.font.body
+      font.bold: row.unread
       elide: Text.ElideRight
+    }
+
+    Rectangle {
+      id: unreadDot
+      visible: row.unread
+      anchors.right: parent.right
+      anchors.rightMargin: 8
+      anchors.verticalCenter: titleText.verticalCenter
+      width: 7
+      height: 7
+      radius: 3.5
+      color: Color.accent
     }
 
     Text {

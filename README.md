@@ -5,7 +5,7 @@ Desktop widgets for Omarchy, above the wallpaper and below windows: a full-heigh
 - **Spotify**: large cover art (double-click to show the Spotify window), title, artist, progress, previous / play-pause / next
 - **Calendar**: month grid (Monday first, ISO week numbers) with a dot per calendar on days with events, month stepping; click a day to list its events, click the month title to jump back to today
 - **Upcoming**: upcoming meetings from your calendars (or the picked day's), grouped by day, with a Join button for Meet/Zoom/Teams links from 10 minutes before start
-- **Pull requests**: PRs waiting on your review, then your own with checks (✓ / ✗ / running) and review state (approved, changes requested, awaiting review, draft). Click to open
+- **Pull requests**: your open PRs, what needs you first: unread reviews/comments (dot), ready to merge, changes requested; each with checks (✓ / ✗ / running) and who did what last. Bots are ignored. Click to open
 - **Actions**: tracked GitHub Actions runs; running ones first with progress against the workflow's typical duration, then results from the last 24 hours. Click a run to open it
 - **Weather**: current conditions and a 3-day forecast from wttr.in, using Omarchy's weather location (or IP auto-detect)
 - **Spotify bar widget**: icon plus track title while playing
@@ -62,7 +62,7 @@ acme/api  mine  ^CI$
 acme/api  all   ^Deploy (Staging|Production)
 ```
 
-`bin/github-sync` polls every minute while a run is in progress (5 minutes otherwise) and sends desktop notifications when a run finishes (`mine` for your own runs, `all` for every run), when your review is requested, and when your PR is approved or gets changes requested.
+`bin/github-sync` polls every minute while a run is in progress (5 minutes otherwise) and sends desktop notifications when a run finishes (`mine` for your own runs, `all` for every run), and when someone reviews, approves, requests changes on or comments on your PR.
 
 ## Glass
 
@@ -76,6 +76,6 @@ hl.layer_rule({ match = { namespace = "^kpedroc-desk$" }, blur = true, ignore_al
 
 ## Config
 
-- `Service.qml`: `monitor` (empty = first screen), `margin`, `sidebarWidth`, `rightWidth`; row limits on `PullsSection` (`maxReview`, `maxMine`) and `ActionsSection` (`maxRuns`), `glass` (island opacity)
+- `Service.qml`: `monitor` (empty = first screen), `margin`, `sidebarWidth`, `rightWidth`; row limits on `PullsSection` (`maxMine`) and `ActionsSection` (`maxRuns`), `glass` (island opacity)
 - Bar widget entry in `shell.json`: `maxChars` (title length, default 30)
 - Sidebar changes need `omarchy-restart-shell`; the bar widget reloads on save

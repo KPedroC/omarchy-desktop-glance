@@ -114,7 +114,7 @@ Item {
       Island {
         glass: root.glass
         Layout.fillWidth: true
-        PullsSection { width: parent.width; model: github; maxReview: 2; maxMine: 2 }
+        PullsSection { width: parent.width; model: github; maxMine: 3 }
       }
 
       Island {
