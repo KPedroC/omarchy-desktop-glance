@@ -3,18 +3,20 @@ import QtQuick.Effects
 import Quickshell
 import qs.Commons
 
-// Square cover art filling its island, corners masked to the island radius.
+// Cover art filling its island (cropped to `aspect`), corners masked to the island radius.
 // Click opens Spotify when it isn't running; double-click shows its window.
 Item {
   id: root
 
   property var player: null
   property real radius: 16
+  // Height as a fraction of width; 1 = square.
+  property real aspect: 0.66
 
   readonly property bool hasArt: player !== null && (player.trackArtUrl || "") !== "" && (player.trackTitle || "") !== ""
   readonly property string togglePath: decodeURIComponent(Qt.resolvedUrl("bin/spotify-toggle").toString().replace("file://", ""))
 
-  implicitHeight: width
+  implicitHeight: Math.round(width * aspect)
 
   Image {
     id: art
