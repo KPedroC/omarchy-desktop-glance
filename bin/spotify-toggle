@@ -1,0 +1,55 @@
+#!/bin/bash
+# Keeps Spotify's window on the hidden special:spotify workspace.
+#   spotify-toggle         show/hide the window, launching Spotify if needed;
+#                          a window on a normal workspace gets hidden
+#   spotify-toggle --start launch Spotify straight into the hidden workspace
+
+workspace="special:spotify"
+
+window_address() {
+  hyprctl clients -j | jq -r '.[] | select(.class | test("spotify"; "i")) | .address' | head -n1
+}
+
+window_workspace() {
+  hyprctl clients -j | jq -r --arg a "$1" '.[] | select(.address == $a) | .workspace.name'
+}
+
+stash() {
+  hyprctl dispatch "hl.dsp.window.move({ window = \"address:$1\", workspace = \"$workspace\", follow = false })" >/dev/null
+}
+
+toggle() {
+  hyprctl dispatch 'hl.dsp.workspace.toggle_special("spotify")' >/dev/null
+}
+
+wait_for_window() {
+  for _ in $(seq 1 50); do
+    address=$(window_address)
+    [[ -n $address ]] && return 0
+    sleep 0.2
+  done
+  return 1
+}
+
+address=$(window_address)
+
+if [[ -z $address ]]; then
+  pgrep -x spotify >/dev/null || setsid uwsm-app -- spotify >/dev/null 2>&1 &
+  wait_for_window || exit 1
+  # Spotify re-maps its window during startup; keep it stashed until settled.
+  for _ in $(seq 1 15); do
+    address=$(window_address)
+    [[ -n $address && $(window_workspace "$address") != "$workspace" ]] && stash "$address"
+    sleep 0.2
+  done
+  [[ $1 == --start ]] || toggle
+  exit 0
+fi
+
+[[ $1 == --start ]] && exit 0
+
+if [[ $(window_workspace "$address") != "$workspace" ]]; then
+  stash "$address"
+else
+  toggle
+fi

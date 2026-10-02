@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "kpedroc.desk",
+  "name": "Desk",
+  "version": "0.3.0",
+  "author": "KPedroC",
+  "license": "MIT",
+  "description": "Desktop sidebar with Spotify, calendar and weather, plus a Spotify bar widget",
+  "kinds": [
+    "service",
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "service": "Service.qml",
+    "barWidget": "SpotifyWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Spotify",
+    "description": "Now playing; click to show/hide the Spotify window",
+    "category": "Media",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "maxChars": 30
+    },
+    "schema": [
+      {
+        "key": "maxChars",
+        "type": "integer",
+        "label": "Max title length",
+        "min": 0,
+        "max": 80,
+        "step": 5,
+        "defaultValue": 30
+      }
+    ]
+  }
+}
