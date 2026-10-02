@@ -37,7 +37,8 @@ Item {
     spacing: 4
 
     Rectangle {
-      width: parent.width
+      anchors.horizontalCenter: parent.horizontalCenter
+      width: Math.min(parent.width, 280)
       height: width
       radius: 10
       color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.08)

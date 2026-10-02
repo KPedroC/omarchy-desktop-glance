@@ -1,6 +1,7 @@
 #!/usr/bin/python3
-"""Fetch the calendars in ~/.config/omarchy/desk-calendars and write the
-next days of events to ~/.cache/omarchy-desk/events.json.
+"""Fetch the calendars in ~/.config/omarchy/desk-calendars and write events
+from the start of this month's calendar grid to two months ahead to
+~/.cache/omarchy-desk/events.json.
 
 Sources are iCal feed URLs, or `google:<calendar id>` read through the
 Google Calendar API with OAuth.
@@ -41,7 +42,7 @@ GOOGLE_ACCESS = Path.home() / ".local/state/omarchy-desk/google-access.json"
 GOOGLE_CACHE = Path.home() / ".cache/omarchy-desk/google-cache.json"
 GOOGLE_INTERVAL = timedelta(minutes=15)
 GOOGLE_SCOPE = "https://www.googleapis.com/auth/calendar.readonly"
-DAYS = 7
+DAYS_AHEAD = 62
 MEETING_LINK = re.compile(r"https://(?:[\w-]+\.)?(?:meet\.google\.com|zoom\.us|teams\.microsoft\.com|teams\.live\.com)/[^\s\"<>\\]+")
 
 
@@ -248,8 +249,14 @@ def google_events(calendar, start, end):
         "orderBy": "startTime",
         "maxResults": "250",
     }
-    data = google_get(f"/calendars/{urllib.parse.quote(calendar_id)}/events", params)
-    for item in data.get("items", []):
+    items = []
+    while True:
+        data = google_get(f"/calendars/{urllib.parse.quote(calendar_id)}/events", params)
+        items.extend(data.get("items", []))
+        if not data.get("nextPageToken"):
+            break
+        params["pageToken"] = data["nextPageToken"]
+    for item in items:
         if item.get("status") == "cancelled":
             continue
         if any(a.get("self") and a.get("responseStatus") == "declined" for a in item.get("attendees", [])):
@@ -319,8 +326,10 @@ def main():
         return google_list()
 
     force = "--force" in sys.argv
-    start = datetime.combine(date.today(), time.min).astimezone()
-    end = start + timedelta(days=DAYS)
+    # Covers the leading days of the current month's grid (Monday first).
+    first = date.today().replace(day=1)
+    start = datetime.combine(first - timedelta(days=first.weekday()), time.min).astimezone()
+    end = datetime.combine(date.today() + timedelta(days=DAYS_AHEAD), time.min).astimezone()
     events, seen, errors = [], set(), []
     calendars = read_config()
     cache = load_google_cache()

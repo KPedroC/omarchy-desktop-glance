@@ -20,7 +20,10 @@ Item {
   // Hyprland monitor name; empty picks the first screen.
   readonly property string monitor: ""
   readonly property int margin: 16
-  readonly property int sidebarWidth: 320
+  readonly property int sidebarWidth: 380
+
+  // Date picked in the calendar; null shows upcoming events.
+  property var selectedDate: null
 
   readonly property var player: Spotify.findPlayer(Mpris.players ? Mpris.players.values : [])
   readonly property var targetScreen: {
@@ -67,6 +70,8 @@ Item {
 
   Component.onCompleted: checkCovered()
 
+  EventsModel { id: events }
+
   PanelWindow {
     screen: root.targetScreen
     visible: root.targetScreen !== null && (!root.covered || frame.opacity > 0)
@@ -98,9 +103,22 @@ Item {
 
         PlayerSection { Layout.fillWidth: true; player: root.player }
         Divider {}
-        CalendarSection { Layout.fillWidth: true }
+        CalendarSection {
+          Layout.fillWidth: true
+          model: events
+          selectedDate: root.selectedDate
+          onDateClicked: function(date) {
+            root.selectedDate = root.selectedDate && events.sameDay(root.selectedDate, date) ? null : date
+          }
+        }
         Divider {}
-        EventsSection { Layout.fillWidth: true; Layout.fillHeight: true }
+        EventsSection {
+          Layout.fillWidth: true
+          Layout.fillHeight: true
+          model: events
+          selectedDate: root.selectedDate
+          onCleared: root.selectedDate = null
+        }
         Divider {}
         WeatherSection { Layout.fillWidth: true }
       }

@@ -1,9 +1,14 @@
 import QtQuick
 import qs.Commons
 
-// Month grid, Monday first, with ISO week numbers.
+// Month grid, Monday first, with ISO week numbers. Days with events get a
+// dot per calendar; clicking a day selects it.
 Item {
   id: root
+
+  property var model: null
+  property var selectedDate: null
+  signal dateClicked(var date)
 
   readonly property color fg: Color.popups.text
   readonly property color dim: Qt.darker(fg, 1.6)
@@ -132,9 +137,10 @@ Item {
 
         Text {
           width: root.cell
-          height: root.cell * 0.8
+          height: root.cell * 0.78
           horizontalAlignment: Text.AlignHCenter
           verticalAlignment: Text.AlignVCenter
+          bottomPadding: 6
           text: root.isoWeek(week.monday)
           color: Qt.rgba(root.dim.r, root.dim.g, root.dim.b, 0.6)
           font.family: root.fontFamily
@@ -145,30 +151,64 @@ Item {
           model: 7
 
           Item {
+            id: cell
             required property int index
             readonly property var date: root.days[week.index * 7 + index]
             readonly property bool isToday: root.sameDay(date, root.today)
+            readonly property bool isSelected: root.selectedDate !== null && root.sameDay(date, root.selectedDate)
             readonly property bool inMonth: date.getMonth() === root.viewMonth
+            readonly property var colors: root.model ? (root.model.colorsByDay[root.model.dayKey(date)] || []) : []
+            readonly property real circle: Math.min(width, height) - 10
 
             width: root.cell
-            height: root.cell * 0.8
+            height: root.cell * 0.78
 
             Rectangle {
-              anchors.centerIn: parent
-              width: Math.min(parent.width, parent.height) - 4
+              anchors.horizontalCenter: parent.horizontalCenter
+              y: 2
+              width: cell.circle
               height: width
               radius: width / 2
-              color: Color.accent
-              visible: parent.isToday
+              color: cell.isToday ? Color.accent : (cellMouse.containsMouse ? Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.1) : "transparent")
+              border.width: cell.isSelected ? 2 : 0
+              border.color: cell.isToday ? root.fg : Color.accent
+
+              Text {
+                anchors.centerIn: parent
+                text: cell.date.getDate()
+                color: cell.isToday ? Color.popups.background : (cell.inMonth ? root.fg : Qt.rgba(root.dim.r, root.dim.g, root.dim.b, 0.5))
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.body
+                font.bold: cell.isToday || cell.isSelected
+              }
             }
 
-            Text {
-              anchors.centerIn: parent
-              text: parent.date.getDate()
-              color: parent.isToday ? Color.popups.background : (parent.inMonth ? root.fg : Qt.rgba(root.dim.r, root.dim.g, root.dim.b, 0.5))
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.body
-              font.bold: parent.isToday
+            Row {
+              anchors.horizontalCenter: parent.horizontalCenter
+              anchors.bottom: parent.bottom
+              anchors.bottomMargin: 2
+              spacing: 3
+              opacity: cell.inMonth ? 1 : 0.5
+
+              Repeater {
+                model: cell.colors.slice(0, 4)
+
+                Rectangle {
+                  required property string modelData
+                  width: 5
+                  height: 5
+                  radius: 2.5
+                  color: modelData
+                }
+              }
+            }
+
+            MouseArea {
+              id: cellMouse
+              anchors.fill: parent
+              hoverEnabled: true
+              cursorShape: Qt.PointingHandCursor
+              onClicked: root.dateClicked(cell.date)
             }
           }
         }

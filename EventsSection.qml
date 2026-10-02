@@ -1,23 +1,25 @@
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import qs.Commons
 
-// Upcoming events from bin/calendar-sync, grouped by day. Shows as many as
-// fit in the height it's given.
+// Upcoming events grouped by day, or one day's events when a date is picked
+// in the calendar. Shows as many as fit in the height it's given.
 Item {
   id: root
+
+  property var model: null
+  property var selectedDate: null
+  signal cleared()
 
   readonly property color fg: Color.popups.text
   readonly property color dim: Qt.darker(fg, 1.6)
   readonly property string fontFamily: Style.font.family
-  readonly property string syncPath: decodeURIComponent(Qt.resolvedUrl("bin/calendar-sync").toString().replace("file://", ""))
 
-  property var feed: null
-  property var now: new Date()
-
-  readonly property var errors: feed && feed.errors ? feed.errors : []
-  readonly property var rows: buildRows(feed && feed.events ? feed.events : [], now)
+  readonly property var now: model ? model.now : new Date()
+  readonly property var errors: model ? model.errors : []
+  readonly property var rows: selectedDate
+    ? buildDayRows(model ? model.eventsOn(selectedDate) : [], selectedDate, now)
+    : buildRows(model ? model.events : [], now)
 
   clip: true
 
@@ -30,7 +32,14 @@ Item {
     var diff = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - today) / 86400000)
     if (diff === 0) return "Today"
     if (diff === 1) return "Tomorrow"
+    if (diff === -1) return "Yesterday"
     return Qt.formatDate(d, "dddd d MMM")
+  }
+
+  function eventRow(e, now) {
+    var start = new Date(e.start)
+    var end = new Date(e.end)
+    return { header: false, event: e, start: start, end: end, live: start <= now && now < end, past: end <= now }
   }
 
   // Flattens events into header + event rows, dropping ones already over.
@@ -39,18 +48,22 @@ Item {
     var list = []
     var lastKey = ""
     for (var i = 0; i < events.length; i++) {
-      var e = events[i]
-      var start = new Date(e.start)
-      var end = new Date(e.end)
-      if (end <= now) continue
-      var shown = start < now ? now : start
+      var row = eventRow(events[i], now)
+      if (row.past) continue
+      var shown = row.start < now ? now : row.start
       var key = dayKey(shown)
       if (key !== lastKey) {
         list.push({ header: true, label: dayLabel(shown) })
         lastKey = key
       }
-      list.push({ header: false, event: e, start: start, end: end, live: start <= now && now < end })
+      list.push(row)
     }
+    return list
+  }
+
+  function buildDayRows(events, day, now) {
+    var list = []
+    for (var i = 0; i < events.length; i++) list.push(eventRow(events[i], now))
     return list
   }
 
@@ -64,41 +77,6 @@ Item {
     return !row.event.allDay && row.event.link !== "" && now >= new Date(row.start - 600000) && now < row.end
   }
 
-  function sync(force) {
-    if (syncProc.running) return
-    syncProc.command = force ? [root.syncPath, "--force"] : [root.syncPath]
-    syncProc.running = true
-  }
-
-  FileView {
-    path: Quickshell.env("HOME") + "/.cache/omarchy-desk/events.json"
-    watchChanges: true
-    printErrors: false
-    onFileChanged: reload()
-    onLoaded: {
-      try { root.feed = JSON.parse(text()) } catch (e) { root.feed = null }
-    }
-  }
-
-  Process {
-    id: syncProc
-  }
-
-  Timer {
-    interval: 5 * 60000
-    repeat: true
-    running: true
-    triggeredOnStart: true
-    onTriggered: root.sync(false)
-  }
-
-  Timer {
-    interval: 30000
-    repeat: true
-    running: true
-    onTriggered: root.now = new Date()
-  }
-
   Column {
     width: root.width
     spacing: 2
@@ -109,7 +87,7 @@ Item {
 
       Text {
         anchors.verticalCenter: parent.verticalCenter
-        text: "Upcoming"
+        text: root.selectedDate ? root.dayLabel(root.selectedDate) : "Upcoming"
         color: root.fg
         font.family: root.fontFamily
         font.pixelSize: Style.font.title
@@ -117,8 +95,35 @@ Item {
       }
 
       Rectangle {
-        id: reloadButton
+        id: closeButton
+        visible: root.selectedDate !== null
         anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        width: visible ? 24 : 0
+        height: 24
+        radius: 12
+        color: closeMouse.containsMouse ? Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.12) : "transparent"
+
+        Text {
+          anchors.centerIn: parent
+          text: "󰅖"
+          color: root.dim
+          font.family: root.fontFamily
+          font.pixelSize: 14
+        }
+
+        MouseArea {
+          id: closeMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: root.cleared()
+        }
+      }
+
+      Rectangle {
+        id: reloadButton
+        anchors.right: closeButton.left
         anchors.verticalCenter: parent.verticalCenter
         width: 24
         height: 24
@@ -133,7 +138,7 @@ Item {
           font.pixelSize: 14
 
           RotationAnimation on rotation {
-            running: syncProc.running
+            running: root.model !== null && root.model.syncing
             loops: Animation.Infinite
             from: 0
             to: 360
@@ -147,7 +152,7 @@ Item {
           anchors.fill: parent
           hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
-          onClicked: root.sync(true)
+          onClicked: if (root.model) root.model.sync(true)
         }
       }
 
@@ -164,8 +169,8 @@ Item {
     }
 
     Text {
-      visible: root.feed !== null && root.rows.length === 0
-      text: "Nothing in the next 7 days"
+      visible: root.model !== null && root.model.feed !== null && root.rows.length === 0
+      text: root.selectedDate ? "No events" : "Nothing coming up"
       color: root.dim
       font.family: root.fontFamily
       font.pixelSize: Style.font.body
@@ -228,7 +233,7 @@ Item {
             anchors.rightMargin: 6
             anchors.verticalCenter: parent.verticalCenter
             text: rowItem.row.header ? "" : rowItem.row.event.title
-            color: root.fg
+            color: !rowItem.row.header && rowItem.row.past ? root.dim : root.fg
             font.family: root.fontFamily
             font.pixelSize: Style.font.body
             font.bold: !rowItem.row.header && rowItem.row.live
