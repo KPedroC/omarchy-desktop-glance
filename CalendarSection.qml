@@ -15,6 +15,11 @@ Item {
 
   readonly property real cell: width / 8
   readonly property var days: buildDays(viewYear, viewMonth)
+  readonly property int weeks: {
+    var first = new Date(viewYear, viewMonth, 1)
+    var lead = (first.getDay() + 6) % 7
+    return Math.ceil((lead + new Date(viewYear, viewMonth + 1, 0).getDate()) / 7)
+  }
 
   implicitHeight: content.implicitHeight
 
@@ -70,23 +75,6 @@ Item {
     width: root.width
     spacing: 4
 
-    Text {
-      text: Qt.formatDate(root.today, "dddd")
-      color: root.dim
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.subtitle
-    }
-
-    Text {
-      text: Qt.formatDate(root.today, "d MMMM")
-      color: root.fg
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.display
-      font.bold: true
-    }
-
-    Item { width: 1; height: 8 }
-
     Item {
       width: parent.width
       height: 28
@@ -135,7 +123,7 @@ Item {
     }
 
     Repeater {
-      model: 6
+      model: root.weeks
 
       Row {
         id: week
@@ -144,7 +132,7 @@ Item {
 
         Text {
           width: root.cell
-          height: root.cell * 0.9
+          height: root.cell * 0.8
           horizontalAlignment: Text.AlignHCenter
           verticalAlignment: Text.AlignVCenter
           text: root.isoWeek(week.monday)
@@ -163,7 +151,7 @@ Item {
             readonly property bool inMonth: date.getMonth() === root.viewMonth
 
             width: root.cell
-            height: root.cell * 0.9
+            height: root.cell * 0.8
 
             Rectangle {
               anchors.centerIn: parent

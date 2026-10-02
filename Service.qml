@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
@@ -90,23 +91,25 @@ Item {
       border.width: 1
       border.color: Qt.rgba(Color.popups.border.r, Color.popups.border.g, Color.popups.border.b, 0.5)
 
-      Column {
+      ColumnLayout {
         anchors.fill: parent
         anchors.margins: 16
-        spacing: 20
+        spacing: 16
 
-        PlayerSection { width: parent.width; player: root.player }
+        PlayerSection { Layout.fillWidth: true; player: root.player }
         Divider {}
-        CalendarSection { width: parent.width }
+        CalendarSection { Layout.fillWidth: true }
         Divider {}
-        WeatherSection { width: parent.width }
+        EventsSection { Layout.fillWidth: true; Layout.fillHeight: true }
+        Divider {}
+        WeatherSection { Layout.fillWidth: true }
       }
     }
   }
 
   component Divider: Rectangle {
-    width: parent.width
-    height: 1
+    Layout.fillWidth: true
+    implicitHeight: 1
     color: Qt.rgba(Color.popups.text.r, Color.popups.text.g, Color.popups.text.b, 0.1)
   }
 }

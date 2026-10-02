@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""Fetch the iCal feeds in ~/.config/omarchy/desk-calendars and write the
+next days of events to ~/.cache/omarchy-desk/events.json.
+
+Feed URLs are secrets: they are never printed, logged or written out.
+"""
+
+import json
+import os
+import re
+import sys
+import tempfile
+import urllib.request
+from datetime import date, datetime, time, timedelta
+from pathlib import Path
+
+import icalendar
+import recurring_ical_events
+
+CONFIG = Path.home() / ".config/omarchy/desk-calendars"
+OUTPUT = Path.home() / ".cache/omarchy-desk/events.json"
+DAYS = 7
+MEETING_LINK = re.compile(r"https://(?:[\w-]+\.)?(?:meet\.google\.com|zoom\.us|teams\.microsoft\.com|teams\.live\.com)/[^\s\"<>\\]+")
+
+
+def read_config():
+    calendars = []
+    for line in CONFIG.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split()
+        if len(parts) >= 3 and parts[2].startswith("http"):
+            calendars.append({"label": parts[0], "color": parts[1], "url": parts[2]})
+    return calendars
+
+
+def fetch(url):
+    request = urllib.request.Request(url, headers={"User-Agent": "omarchy-desk"})
+    with urllib.request.urlopen(request, timeout=20) as response:
+        return response.read()
+
+
+def as_datetime(value):
+    if isinstance(value, datetime):
+        return value.astimezone() if value.tzinfo else value.replace(tzinfo=datetime.now().astimezone().tzinfo)
+    return datetime.combine(value, time.min).astimezone()
+
+
+def meeting_link(event):
+    for key in ("X-GOOGLE-CONFERENCE", "URL", "LOCATION", "DESCRIPTION"):
+        match = MEETING_LINK.search(str(event.get(key, "")))
+        if match:
+            return match.group(0)
+    return ""
+
+
+def events_for(calendar, start, end):
+    ical = icalendar.Calendar.from_ical(fetch(calendar["url"]))
+    for event in recurring_ical_events.of(ical).between(start, end):
+        if str(event.get("STATUS", "")).upper() == "CANCELLED":
+            continue
+        dtstart = event.get("DTSTART").dt
+        dtend = event.get("DTEND").dt if event.get("DTEND") else dtstart
+        all_day = not isinstance(dtstart, datetime)
+        yield {
+            "uid": str(event.get("UID", "")),
+            "title": str(event.get("SUMMARY", "")).strip() or "(No title)",
+            "start": as_datetime(dtstart).isoformat(),
+            "end": as_datetime(dtend).isoformat(),
+            "allDay": all_day,
+            "location": str(event.get("LOCATION", "")).strip(),
+            "link": meeting_link(event),
+            "calendar": calendar["label"],
+            "color": calendar["color"],
+        }
+
+
+def main():
+    start = datetime.combine(date.today(), time.min).astimezone()
+    end = start + timedelta(days=DAYS)
+    events, seen, errors = [], set(), []
+
+    for calendar in read_config():
+        try:
+            for event in events_for(calendar, start, end):
+                key = (event["uid"], event["start"]) if event["uid"] else (event["title"], event["start"])
+                if key in seen:
+                    continue
+                seen.add(key)
+                events.append(event)
+        except Exception as error:
+            # Only the label and error type: messages can contain the URL.
+            errors.append({"calendar": calendar["label"], "error": type(error).__name__})
+
+    events.sort(key=lambda e: (e["start"], not e["allDay"]))
+    for event in events:
+        del event["uid"]
+
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"updatedAt": datetime.now().astimezone().isoformat(), "errors": errors, "events": events}
+    with tempfile.NamedTemporaryFile("w", dir=OUTPUT.parent, delete=False) as tmp:
+        json.dump(payload, tmp)
+    os.replace(tmp.name, OUTPUT)
+    print(f"{len(events)} events, {len(errors)} errors")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
