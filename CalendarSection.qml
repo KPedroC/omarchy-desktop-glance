@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import qs.Ui
 
 // Month grid, Monday first, with ISO week numbers. Days with events get a
 // dot per calendar; clicking a day selects it.
@@ -11,7 +12,7 @@ Item {
   signal dateClicked(var date)
 
   readonly property color fg: Color.popups.text
-  readonly property color dim: Qt.darker(fg, 1.6)
+  readonly property color dim: Qt.darker(fg, 1.55)
   readonly property string fontFamily: Style.font.family
 
   property var today: new Date()
@@ -78,19 +79,16 @@ Item {
   Column {
     id: content
     width: root.width
-    spacing: 4
+    spacing: Style.spacing.sm
 
     Item {
       width: parent.width
-      height: 28
+      height: 26
 
-      Text {
+      PanelSectionHeader {
         anchors.verticalCenter: parent.verticalCenter
-        text: Qt.formatDate(new Date(root.viewYear, root.viewMonth, 1), "MMMM yyyy")
-        color: root.fg
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.title
-        font.bold: true
+        text: Qt.formatDate(new Date(root.viewYear, root.viewMonth, 1), "MMMM yyyy").toUpperCase()
+        foreground: root.fg
 
         MouseArea {
           anchors.fill: parent
@@ -102,10 +100,10 @@ Item {
       Row {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 4
+        spacing: Style.spacing.xs
 
-        StepButton { glyph: "󰅁"; onClicked: root.step(-1) }
-        StepButton { glyph: "󰅂"; onClicked: root.step(1) }
+        IconButton { glyph: "󰅁"; size: 24; onClicked: root.step(-1) }
+        IconButton { glyph: "󰅂"; size: 24; onClicked: root.step(1) }
       }
     }
 
@@ -116,13 +114,14 @@ Item {
         Text {
           required property string modelData
           width: root.cell
-          height: 22
+          height: 20
           horizontalAlignment: Text.AlignHCenter
           verticalAlignment: Text.AlignVCenter
           text: modelData
           color: root.dim
           font.family: root.fontFamily
           font.pixelSize: Style.font.caption
+          font.bold: true
         }
       }
     }
@@ -158,36 +157,36 @@ Item {
             readonly property bool isSelected: root.selectedDate !== null && root.sameDay(date, root.selectedDate)
             readonly property bool inMonth: date.getMonth() === root.viewMonth
             readonly property var colors: root.model ? (root.model.colorsByDay[root.model.dayKey(date)] || []) : []
-            readonly property real circle: Math.min(width, height) - 10
 
             width: root.cell
             height: root.cell * 0.78
 
             Rectangle {
-              anchors.horizontalCenter: parent.horizontalCenter
-              y: 2
-              width: cell.circle
-              height: width
-              radius: width / 2
-              color: cell.isToday ? Color.accent : (cellMouse.containsMouse ? Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.1) : "transparent")
-              border.width: cell.isSelected ? 2 : 0
+              anchors.fill: parent
+              anchors.margins: 2
+              radius: Style.cornerRadius
+              color: cell.isToday ? Color.accent
+                : (cellMouse.containsMouse ? Style.hoverFillFor(root.fg, Color.accent) : "transparent")
+              border.width: cell.isSelected ? 1 : 0
               border.color: cell.isToday ? root.fg : Color.accent
+            }
 
-              Text {
-                anchors.centerIn: parent
-                text: cell.date.getDate()
-                color: cell.isToday ? Color.popups.background : (cell.inMonth ? root.fg : Qt.rgba(root.dim.r, root.dim.g, root.dim.b, 0.5))
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.body
-                font.bold: cell.isToday || cell.isSelected
-              }
+            Text {
+              anchors.horizontalCenter: parent.horizontalCenter
+              anchors.verticalCenter: parent.verticalCenter
+              anchors.verticalCenterOffset: -3
+              text: cell.date.getDate()
+              color: cell.isToday ? Color.popups.background : (cell.inMonth ? root.fg : Qt.rgba(root.dim.r, root.dim.g, root.dim.b, 0.5))
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.body
+              font.bold: cell.isToday || cell.isSelected
             }
 
             Row {
               anchors.horizontalCenter: parent.horizontalCenter
               anchors.bottom: parent.bottom
-              anchors.bottomMargin: 2
-              spacing: 3
+              anchors.bottomMargin: 5
+              spacing: 2
               opacity: cell.inMonth ? 1 : 0.5
 
               Repeater {
@@ -195,10 +194,9 @@ Item {
 
                 Rectangle {
                   required property string modelData
-                  width: 5
-                  height: 5
-                  radius: 2.5
-                  color: modelData
+                  width: 4
+                  height: 4
+                  color: cell.isToday ? Color.popups.background : modelData
                 }
               }
             }
@@ -213,34 +211,6 @@ Item {
           }
         }
       }
-    }
-  }
-
-  component StepButton: Rectangle {
-    id: button
-
-    property string glyph: ""
-    signal clicked()
-
-    width: 26
-    height: 26
-    radius: 13
-    color: mouse.containsMouse ? Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.12) : "transparent"
-
-    Text {
-      anchors.centerIn: parent
-      text: button.glyph
-      color: root.fg
-      font.family: root.fontFamily
-      font.pixelSize: 16
-    }
-
-    MouseArea {
-      id: mouse
-      anchors.fill: parent
-      hoverEnabled: true
-      cursorShape: Qt.PointingHandCursor
-      onClicked: button.clicked()
     }
   }
 }

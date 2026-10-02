@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.Commons
+import qs.Ui
 
 // Upcoming events grouped by day, or one day's events when a date is picked
 // in the calendar. Shows as many as fit in the height it's given.
@@ -12,7 +13,7 @@ Item {
   signal cleared()
 
   readonly property color fg: Color.popups.text
-  readonly property color dim: Qt.darker(fg, 1.6)
+  readonly property color dim: Qt.darker(fg, 1.55)
   readonly property string fontFamily: Style.font.family
 
   readonly property var now: model ? model.now : new Date()
@@ -83,82 +84,48 @@ Item {
 
     Item {
       width: parent.width
-      height: 24
+      height: 26
 
-      Text {
+      PanelSectionHeader {
         anchors.verticalCenter: parent.verticalCenter
-        text: root.selectedDate ? root.dayLabel(root.selectedDate) : "Upcoming"
-        color: root.fg
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.title
-        font.bold: true
+        text: (root.selectedDate ? root.dayLabel(root.selectedDate) : "Upcoming").toUpperCase()
+        foreground: root.fg
       }
 
-      Rectangle {
+      IconButton {
         id: closeButton
         visible: root.selectedDate !== null
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         width: visible ? 24 : 0
-        height: 24
-        radius: 12
-        color: closeMouse.containsMouse ? Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.12) : "transparent"
-
-        Text {
-          anchors.centerIn: parent
-          text: "󰅖"
-          color: root.dim
-          font.family: root.fontFamily
-          font.pixelSize: 14
-        }
-
-        MouseArea {
-          id: closeMouse
-          anchors.fill: parent
-          hoverEnabled: true
-          cursorShape: Qt.PointingHandCursor
-          onClicked: root.cleared()
-        }
+        size: 24
+        glyph: "󰅖"
+        foreground: root.dim
+        onClicked: root.cleared()
       }
 
-      Rectangle {
+      IconButton {
         id: reloadButton
         anchors.right: closeButton.left
         anchors.verticalCenter: parent.verticalCenter
-        width: 24
-        height: 24
-        radius: 12
-        color: reloadMouse.containsMouse ? Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.12) : "transparent"
+        size: 24
+        glyph: "󰑐"
+        foreground: root.dim
+        onClicked: if (root.model) root.model.sync(true)
 
-        Text {
-          anchors.centerIn: parent
-          text: "󰑐"
-          color: root.dim
-          font.family: root.fontFamily
-          font.pixelSize: 14
-
-          RotationAnimation on rotation {
-            running: root.model !== null && root.model.syncing
-            loops: Animation.Infinite
-            from: 0
-            to: 360
-            duration: 900
-            onRunningChanged: if (!running) parent.rotation = 0
-          }
-        }
-
-        MouseArea {
-          id: reloadMouse
-          anchors.fill: parent
-          hoverEnabled: true
-          cursorShape: Qt.PointingHandCursor
-          onClicked: if (root.model) root.model.sync(true)
+        RotationAnimation on rotation {
+          running: root.model !== null && root.model.syncing
+          loops: Animation.Infinite
+          from: 0
+          to: 360
+          duration: 900
+          onRunningChanged: if (!running) reloadButton.rotation = 0
         }
       }
 
       Text {
         anchors.right: reloadButton.left
-        anchors.rightMargin: 6
+        anchors.rightMargin: Style.spacing.md
         anchors.verticalCenter: parent.verticalCenter
         visible: root.errors.length > 0
         text: "󰀦 " + root.errors.map(function(e) { return e.calendar }).join(", ")
@@ -197,21 +164,23 @@ Item {
           color: root.dim
           font.family: root.fontFamily
           font.pixelSize: Style.font.caption
+          font.bold: true
         }
 
         Rectangle {
           visible: !rowItem.row.header
           anchors.fill: parent
-          radius: 6
-          color: !rowItem.row.header && rowItem.row.live ? Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.08) : "transparent"
+          radius: Style.cornerRadius
+          color: !rowItem.row.header && rowItem.row.live ? Style.selectedFillFor(root.fg, Color.accent) : "transparent"
+          border.width: !rowItem.row.header && rowItem.row.live ? 1 : 0
+          border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.6)
 
           Rectangle {
             id: dot
             x: 6
             anchors.verticalCenter: parent.verticalCenter
-            width: 8
-            height: 8
-            radius: 4
+            width: 3
+            height: 16
             color: rowItem.row.header ? "transparent" : rowItem.row.event.color
           }
 
@@ -247,8 +216,8 @@ Item {
             anchors.rightMargin: 4
             anchors.verticalCenter: parent.verticalCenter
             width: joinText.implicitWidth + 16
-            height: 22
-            radius: 11
+            height: 20
+            radius: Style.cornerRadius
             color: joinMouse.containsMouse ? Qt.lighter(Color.accent, 1.15) : Color.accent
 
             Text {

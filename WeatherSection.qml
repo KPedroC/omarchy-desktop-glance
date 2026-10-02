@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Ui
 import "Weather.js" as Weather
 
 // Current conditions and a 3-day forecast from wttr.in. Uses omarchy's
@@ -10,7 +11,7 @@ Item {
   id: root
 
   readonly property color fg: Color.popups.text
-  readonly property color dim: Qt.darker(fg, 1.6)
+  readonly property color dim: Qt.darker(fg, 1.55)
   readonly property string fontFamily: Style.font.family
 
   property string locationQuery: ""
@@ -83,11 +84,24 @@ Item {
     width: root.width
     spacing: 4
 
-    Text {
-      text: root.area || "Weather"
-      color: root.dim
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.subtitle
+    Item {
+      width: parent.width
+      height: 26
+
+      PanelSectionHeader {
+        anchors.verticalCenter: parent.verticalCenter
+        text: "WEATHER"
+        foreground: root.fg
+      }
+
+      Text {
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        text: root.area
+        color: root.dim
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.caption
+      }
     }
 
     Row {
@@ -147,10 +161,11 @@ Item {
 
           Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: root.dayLabel(index, modelData.date)
+            text: root.dayLabel(index, modelData.date).toUpperCase()
             color: root.dim
             font.family: root.fontFamily
             font.pixelSize: Style.font.caption
+            font.bold: true
           }
 
           Text {

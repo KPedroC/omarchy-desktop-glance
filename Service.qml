@@ -6,6 +6,7 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Services.Mpris
 import qs.Commons
+import qs.Ui
 import "Spotify.js" as Spotify
 
 // Full-height sidebar on the left of the main screen. Sits on the Bottom
@@ -19,7 +20,8 @@ Item {
 
   // Hyprland monitor name; empty picks the first screen.
   readonly property string monitor: ""
-  readonly property int margin: 16
+  // Hyprland's gaps_out, so the sidebar lines up with tiled windows.
+  readonly property int margin: Style.gapsOut * 2
   readonly property int sidebarWidth: 380
 
   // Date picked in the calendar; null shows upcoming events.
@@ -91,15 +93,15 @@ Item {
       anchors.fill: parent
       opacity: root.covered ? 0 : 1
       Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-      radius: 14
-      color: Qt.rgba(Color.popups.background.r, Color.popups.background.g, Color.popups.background.b, 0.85)
-      border.width: 1
-      border.color: Qt.rgba(Color.popups.border.r, Color.popups.border.g, Color.popups.border.b, 0.5)
+      radius: Style.cornerRadius
+      color: Color.popups.background
+      border.width: Math.max(1, Style.space(2))
+      border.color: Color.popups.border
 
       ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 16
-        spacing: 16
+        anchors.margins: Style.spacing.panelPadding
+        spacing: Style.spacing.panelGap
 
         PlayerSection { Layout.fillWidth: true; player: root.player }
         Divider {}
@@ -125,9 +127,8 @@ Item {
     }
   }
 
-  component Divider: Rectangle {
+  component Divider: PanelSeparator {
     Layout.fillWidth: true
-    implicitHeight: 1
-    color: Qt.rgba(Color.popups.text.r, Color.popups.text.g, Color.popups.text.b, 0.1)
+    foreground: Color.popups.text
   }
 }
