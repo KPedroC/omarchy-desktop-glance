@@ -259,6 +259,9 @@ def google_events(calendar, start, end):
     for item in items:
         if item.get("status") == "cancelled":
             continue
+        # Status markers, not meetings.
+        if item.get("eventType") in ("outOfOffice", "workingLocation"):
+            continue
         if any(a.get("self") and a.get("responseStatus") == "declined" for a in item.get("attendees", [])):
             continue
         all_day = "date" in item["start"]
