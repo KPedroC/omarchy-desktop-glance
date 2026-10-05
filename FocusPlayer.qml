@@ -175,6 +175,11 @@ Item {
           visible: root.player !== null
           spacing: Style.spacing.huge
 
+          ShuffleButton {
+            anchors.verticalCenter: parent.verticalCenter
+            size: 34
+            player: root.player
+          }
           IconButton {
             anchors.verticalCenter: parent.verticalCenter
             path: Icons.previous
@@ -198,15 +203,87 @@ Item {
             enabled: root.player !== null && root.player.canGoNext
             onClicked: root.player.next()
           }
+          RepeatButton {
+            anchors.verticalCenter: parent.verticalCenter
+            size: 34
+            player: root.player
+          }
         }
 
-        Text {
+        Row {
           anchors { right: parent.right; verticalCenter: parent.verticalCenter }
-          visible: root.hasTrack
-          text: root.player ? root.formatTime(root.player.position) + " / " + root.formatTime(root.player.length) : ""
-          color: root.dim
-          font.family: root.fontFamily
-          font.pixelSize: Style.font.title
+          spacing: Style.spacing.huge
+
+          Row {
+            id: volumeControl
+            anchors.verticalCenter: parent.verticalCenter
+            visible: root.player !== null && root.player.volumeSupported
+            spacing: Style.spacing.md
+
+            property real unmutedVolume: 0.5
+
+            IconButton {
+              anchors.verticalCenter: parent.verticalCenter
+              path: root.player && root.player.volume > 0 ? Icons.volume : Icons.volumeOff
+              size: 30
+              idleOpacity: 0.6
+              enabled: root.player !== null && root.player.canControl
+              onClicked: {
+                if (root.player.volume > 0) {
+                  volumeControl.unmutedVolume = root.player.volume
+                  root.player.volume = 0
+                } else {
+                  root.player.volume = volumeControl.unmutedVolume
+                }
+              }
+            }
+
+            // Click, drag or scroll to set the volume.
+            Item {
+              anchors.verticalCenter: parent.verticalCenter
+              width: 110
+              height: 14
+
+              Rectangle {
+                anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter }
+                height: volumeArea.containsMouse || volumeArea.pressed ? 6 : 4
+                radius: height / 2
+                color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.15)
+
+                Rectangle {
+                  width: root.player ? parent.width * Math.max(0, Math.min(1, root.player.volume)) : 0
+                  height: parent.height
+                  radius: parent.radius
+                  color: root.fg
+                }
+              }
+
+              MouseArea {
+                id: volumeArea
+                anchors.fill: parent
+                hoverEnabled: true
+                enabled: root.player !== null && root.player.canControl
+                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                function setTo(x) {
+                  root.player.volume = Math.max(0, Math.min(1, x / width))
+                }
+                onPressed: function(mouse) { setTo(mouse.x) }
+                onPositionChanged: function(mouse) { if (pressed) setTo(mouse.x) }
+                onWheel: function(wheel) {
+                  root.player.volume = Math.max(0, Math.min(1, root.player.volume + (wheel.angleDelta.y > 0 ? 0.05 : -0.05)))
+                }
+              }
+            }
+          }
+
+          Text {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: root.hasTrack
+            text: root.player ? root.formatTime(root.player.position) + " / " + root.formatTime(root.player.length) : ""
+            color: root.dim
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.title
+          }
         }
       }
 

@@ -109,6 +109,11 @@ Item {
       anchors.horizontalCenter: parent.horizontalCenter
       spacing: Style.spacing.xl
 
+      ShuffleButton {
+        anchors.verticalCenter: parent.verticalCenter
+        size: 28
+        player: root.player
+      }
       IconButton {
         anchors.verticalCenter: parent.verticalCenter
         path: Icons.previous
@@ -131,6 +136,11 @@ Item {
         size: 36
         enabled: root.player !== null && root.player.canGoNext
         onClicked: root.player.next()
+      }
+      RepeatButton {
+        anchors.verticalCenter: parent.verticalCenter
+        size: 28
+        player: root.player
       }
     }
   }
