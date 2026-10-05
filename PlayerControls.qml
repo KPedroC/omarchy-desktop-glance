@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Mpris
 import qs.Commons
+import "Icons.js" as Icons
 
 // Track title, artist, progress and playback controls.
 Item {
@@ -110,23 +111,23 @@ Item {
 
       IconButton {
         anchors.verticalCenter: parent.verticalCenter
-        glyph: "󰒮"
+        path: Icons.previous
         size: 36
         enabled: root.player !== null && root.player.canGoPrevious
         onClicked: root.player.previous()
       }
       IconButton {
         anchors.verticalCenter: parent.verticalCenter
-        glyph: root.player && root.player.isPlaying ? "󰏤" : "󰐊"
+        path: root.player && root.player.isPlaying ? Icons.pause : Icons.play
         size: 44
         glyphScale: 0.6
         enabled: root.player !== null && root.player.canTogglePlaying
-        color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.1)
+        fill: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.1)
         onClicked: root.player.togglePlaying()
       }
       IconButton {
         anchors.verticalCenter: parent.verticalCenter
-        glyph: "󰒭"
+        path: Icons.next
         size: 36
         enabled: root.player !== null && root.player.canGoNext
         onClicked: root.player.next()
