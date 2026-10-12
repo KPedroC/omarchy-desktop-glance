@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "kpedroc.desktop-glance",
   "name": "Desktop Glance",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "author": "KPedroC",
   "license": "MIT",
   "description": "Desktop widgets with Spotify, calendar, weather and GitHub, plus a Spotify bar widget",
