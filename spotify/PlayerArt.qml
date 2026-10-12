@@ -14,7 +14,7 @@ Item {
   property real aspect: 0.66
 
   readonly property bool hasArt: player !== null && (player.trackArtUrl || "") !== "" && (player.trackTitle || "") !== ""
-  readonly property string togglePath: decodeURIComponent(Qt.resolvedUrl("bin/spotify-toggle").toString().replace("file://", ""))
+  readonly property string togglePath: decodeURIComponent(Qt.resolvedUrl("spotify-toggle").toString().replace("file://", ""))
 
   implicitHeight: Math.round(width * aspect)
 

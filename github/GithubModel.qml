@@ -3,13 +3,13 @@ import Quickshell
 import Quickshell.Io
 
 // GitHub data shared by the Actions and pull request sections. Runs
-// bin/github-sync every minute while a run is in progress, otherwise every
+// github-sync every minute while a run is in progress, otherwise every
 // 5 minutes, and reloads when its output changes.
 Item {
   id: root
   visible: false
 
-  readonly property string syncPath: decodeURIComponent(Qt.resolvedUrl("bin/github-sync").toString().replace("file://", ""))
+  readonly property string syncPath: decodeURIComponent(Qt.resolvedUrl("github-sync").toString().replace("file://", ""))
 
   property var feed: null
   property var now: new Date()

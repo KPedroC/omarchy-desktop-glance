@@ -1,7 +1,8 @@
 import QtQuick
 import Quickshell.Services.Mpris
 import qs.Commons
-import "Icons.js" as Icons
+import "../common"
+import "../common/Icons.js" as Icons
 
 // Cycles off → playlist → track, like Spotify's own button.
 IconButton {

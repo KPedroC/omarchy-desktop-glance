@@ -3,12 +3,12 @@ import Quickshell
 import Quickshell.Io
 
 // Synced events shared by the calendar and events sections. Runs
-// bin/calendar-sync every 5 minutes and reloads when its output changes.
+// calendar-sync every 5 minutes and reloads when its output changes.
 Item {
   id: root
   visible: false
 
-  readonly property string syncPath: decodeURIComponent(Qt.resolvedUrl("bin/calendar-sync").toString().replace("file://", ""))
+  readonly property string syncPath: decodeURIComponent(Qt.resolvedUrl("calendar-sync").toString().replace("file://", ""))
 
   property var feed: null
   property var now: new Date()

@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.Commons
+import "../common"
 
 // Tracked GitHub Actions runs: running ones first with
 // progress against the workflow's typical duration, then recent results.

@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.Commons
+import "../common"
 
 // Upcoming events grouped by day, or one day's events when a date is picked
 // in the calendar. Shows as many as fit in the height it's given.

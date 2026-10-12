@@ -2,7 +2,8 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Mpris
 import qs.Commons
-import "Icons.js" as Icons
+import "../common"
+import "../common/Icons.js" as Icons
 
 // Track title, artist, progress and playback controls.
 Item {
@@ -14,7 +15,7 @@ Item {
   readonly property color fg: Color.popups.text
   readonly property color dim: Qt.darker(fg, 1.55)
   readonly property string fontFamily: Style.font.family
-  readonly property string togglePath: decodeURIComponent(Qt.resolvedUrl("bin/spotify-toggle").toString().replace("file://", ""))
+  readonly property string togglePath: decodeURIComponent(Qt.resolvedUrl("spotify-toggle").toString().replace("file://", ""))
 
   implicitHeight: content.implicitHeight
 

@@ -5,8 +5,13 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Services.Mpris
 import qs.Commons
-import "Icons.js" as Icons
-import "Spotify.js" as Spotify
+import "spotify"
+import "calendar"
+import "github"
+import "weather"
+import "common"
+import "common/Icons.js" as Icons
+import "spotify/Spotify.js" as Spotify
 
 // Desktop widgets on every screen: a full-height column on the left
 // (weather, calendar, events, pull requests, GitHub Actions) and Spotify
@@ -241,7 +246,7 @@ Item {
         exclusionMode: ExclusionMode.Normal
         exclusiveZone: 0
 
-        FocusPlayer {
+        SpotifyFocus {
           id: focusView
           anchors.fill: parent
           player: root.player

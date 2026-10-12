@@ -1,7 +1,7 @@
 #!/bin/bash
 # Prints 1 if a window on the monitor's visible workspaces overlaps the
 # sidebar, else 0.
-#   sidebar-covered <monitor> <x> <y> <width> <height>   (monitor-local, logical px)
+#   desk-covered <monitor> <x> <y> <width> <height>   (monitor-local, logical px)
 
 monitor=$1 x=$2 y=$3 w=$4 h=$5
 

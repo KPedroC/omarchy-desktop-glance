@@ -1,6 +1,7 @@
 import QtQuick
 import qs.Commons
-import "Icons.js" as Icons
+import "../common"
+import "../common/Icons.js" as Icons
 
 IconButton {
   property var player: null

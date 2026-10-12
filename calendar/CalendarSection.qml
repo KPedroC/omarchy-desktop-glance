@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import "../common"
 
 // Month grid, Monday first, with ISO week numbers. Days with events get a
 // dot per calendar; clicking a day selects it.

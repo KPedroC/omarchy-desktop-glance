@@ -2,7 +2,8 @@ import QtQuick
 import QtQuick.Effects
 import Quickshell
 import qs.Commons
-import "Icons.js" as Icons
+import "../common"
+import "../common/Icons.js" as Icons
 
 // Spotify focus view: blurred cover backdrop, large centered cover art and a
 // bottom bar with track info, playback controls and a seekable progress bar.

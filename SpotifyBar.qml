@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Mpris
 import qs.Ui
-import "Spotify.js" as Spotify
+import "spotify/Spotify.js" as Spotify
 
 BarWidget {
   id: root
@@ -13,7 +13,7 @@ BarWidget {
   readonly property string title: player ? (player.trackTitle || "") : ""
   readonly property string artist: player ? (player.trackArtist || "") : ""
   readonly property int maxChars: Number(setting("maxChars", 30))
-  readonly property string togglePath: decodeURIComponent(Qt.resolvedUrl("bin/spotify-toggle").toString().replace("file://", ""))
+  readonly property string togglePath: decodeURIComponent(Qt.resolvedUrl("spotify/spotify-toggle").toString().replace("file://", ""))
 
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight

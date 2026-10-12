@@ -5,14 +5,14 @@
   "version": "0.3.0",
   "author": "KPedroC",
   "license": "MIT",
-  "description": "Desktop sidebar with Spotify, calendar and weather, plus a Spotify bar widget",
+  "description": "Desktop widgets with Spotify, calendar, weather and GitHub, plus a Spotify bar widget",
   "kinds": [
     "service",
     "bar-widget"
   ],
   "entryPoints": {
-    "service": "Service.qml",
-    "barWidget": "SpotifyWidget.qml"
+    "service": "Desktop.qml",
+    "barWidget": "SpotifyBar.qml"
   },
   "barWidget": {
     "displayName": "Spotify",
