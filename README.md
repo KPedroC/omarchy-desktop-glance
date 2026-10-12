@@ -49,7 +49,7 @@ private  #7aa2f7  https://...
 
 `calendar/calendar-sync` runs every 5 minutes (Google API calendars at most every 15, reusing the access token for its hour; the ↻ button forces a full sync) and writes this month's grid through two months ahead to `~/.cache/omarchy/desktop-glance/events.json`. It never prints or logs feed URLs.
 
-### Google Calendar API
+### Google Calendar API (optional)
 
 For Google calendars that block secret iCal links (e.g. Workspace accounts):
 
