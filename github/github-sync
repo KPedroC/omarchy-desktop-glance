@@ -27,6 +27,8 @@ MAX_RUNS = 6
 
 def read_config():
     rules = []
+    if not CONFIG.exists():
+        return rules
     for line in CONFIG.read_text().splitlines():
         line = line.strip()
         if not line or line.startswith("#"):

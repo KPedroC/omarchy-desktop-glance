@@ -48,6 +48,8 @@ MEETING_LINK = re.compile(r"https://(?:[\w-]+\.)?(?:meet\.google\.com|zoom\.us|t
 
 def read_config():
     calendars = []
+    if not CONFIG.exists():
+        return calendars
     for line in CONFIG.read_text().splitlines():
         line = line.strip()
         if not line or line.startswith("#"):
