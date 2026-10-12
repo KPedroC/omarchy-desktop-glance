@@ -22,11 +22,10 @@ Spotify's window lives on the hidden `special:spotify` workspace. Hide it with t
 
 ## Requirements
 
-- Omarchy (shell plugins, Hyprland)
-- `jq`, `curl`
-- iCal calendar feeds: `python-recurring-ical-events` (`sudo pacman -S python-recurring-ical-events`)
-- Pull requests and Actions: the `gh` CLI, logged in (`gh auth login`); without it, turn them off with `"github": false` (see [Features](#features))
-- Spotify parts: the Spotify desktop app
+- **Everything**: Omarchy (includes `jq` and `curl`, used for window detection and weather)
+- **Calendar, iCal feeds only**: `python-recurring-ical-events` (`sudo pacman -S python-recurring-ical-events`)
+- **GitHub**: the `gh` CLI, logged in (`gh auth login`); without it, turn it off with `"github": false` (see [Features](#features))
+- **Spotify**: the Spotify desktop app
 
 ## Install
 
