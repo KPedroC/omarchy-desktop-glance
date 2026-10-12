@@ -18,16 +18,32 @@ Spotify's window lives on the hidden `special:spotify` workspace. Hide it with t
 ## Install
 
 ```bash
-ln -s "$PWD" ~/.config/omarchy/plugins/kpedroc.desk
-omarchy-shell shell rescanPlugins
+omarchy plugin add https://github.com/KPedroC/omarchy-desk.git
 omarchy-shell shell enablePlugin kpedroc.desk '{}'   # sidebar
 omarchy plugin enable kpedroc.desk                   # bar widget
 ```
+
+Private repo: needs GitHub access and git credentials (e.g. `gh auth setup-git`). Update with `omarchy plugin update kpedroc.desk`.
 
 Start Spotify hidden at login (`~/.config/hypr/autostart.lua`):
 
 ```lua
 o.exec_on_start(os.getenv("HOME") .. "/.config/omarchy/plugins/kpedroc.desk/bin/spotify-toggle --start")
+```
+
+Esc hides the Spotify window while it has focus (`~/.config/hypr/bindings.lua`):
+
+```lua
+local spotify_escape = nil
+hl.on("window.active", function(window)
+  local shown = window ~= nil and window.workspace ~= nil and window.workspace.name == "special:spotify"
+  if shown and not spotify_escape then
+    spotify_escape = hl.bind("ESCAPE", hl.dsp.workspace.toggle_special("spotify"), { description = "Hide Spotify" })
+  elseif not shown and spotify_escape then
+    spotify_escape:unbind()
+    spotify_escape = nil
+  end
+end)
 ```
 
 ## Calendars
