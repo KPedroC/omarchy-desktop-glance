@@ -13,7 +13,7 @@ The desktop widgets are a full-height column on the left (weather, calendar, upc
 - **Pull requests**: your open PRs, what needs you first: unread reviews/comments (dot), ready to merge, changes requested; each with checks (✓ / ✗ / running) and who did what last. Bots are ignored. Click to open
 - **Actions**: tracked GitHub Actions runs; running ones first with progress against the workflow's typical duration, then results from the last 24 hours. Click a run to open it
 - **Weather**: current conditions and a 3-day forecast from wttr.in, using Omarchy's weather location (or IP auto-detect)
-- **Spotify bar widget** (optional): icon plus track title while playing
+- **Spotify bar widget**: icon plus track title while playing
   - Left click: show/hide the Spotify window
   - Middle click: play/pause
   - Scroll: next/previous
@@ -32,22 +32,13 @@ Spotify's window lives on the hidden `special:spotify` workspace. Hide it with t
 
 ```bash
 omarchy plugin add https://github.com/KPedroC/omarchy-desktop-glance.git
-omarchy-shell shell enablePlugin kpedroc.desktop-glance '{}'
+omarchy-shell shell enablePlugin kpedroc.desktop-glance '{}'   # desktop widgets
+omarchy plugin enable kpedroc.desktop-glance                   # bar widget
 ```
 
 Private repo: needs GitHub access and git credentials (e.g. `gh auth setup-git`). Update with `omarchy plugin update kpedroc.desktop-glance`.
 
-Works without further setup: weather, Spotify, the month grid, and your pull requests (with `gh` logged in). Everything below is optional.
-
-## Optional
-
-### Spotify bar widget (optional)
-
-```bash
-omarchy plugin enable kpedroc.desktop-glance
-```
-
-### Calendar events (optional)
+## Calendars
 
 List feeds in `~/.config/omarchy/desktop-glance/calendars` (keep it private, never commit it), one per line:
 
@@ -58,7 +49,7 @@ private  #7aa2f7  https://...
 
 `calendar/calendar-sync` runs every 5 minutes (Google API calendars at most every 15, reusing the access token for its hour; the ↻ button forces a full sync) and writes this month's grid through two months ahead to `~/.cache/omarchy/desktop-glance/events.json`. It never prints or logs feed URLs.
 
-#### Google Calendar API (optional)
+### Google Calendar API
 
 For Google calendars that block secret iCal links (e.g. Workspace accounts):
 
@@ -70,7 +61,7 @@ For Google calendars that block secret iCal links (e.g. Workspace accounts):
 
 The refresh token lives in `~/.local/state/omarchy/desktop-glance/google-token.json`; declined meetings, out-of-office and working-location entries are skipped.
 
-### GitHub Actions (optional)
+## GitHub
 
 Pull requests need only the `gh` login. To also track Actions runs, list workflows in `~/.config/omarchy/desktop-glance/github`:
 
@@ -81,6 +72,31 @@ acme/api  all   ^Deploy (Staging|Production)
 ```
 
 `github/github-sync` polls every minute while a run is in progress (5 minutes otherwise) and sends desktop notifications when a run finishes (`mine` for your own runs, `all` for every run), and when someone reviews, approves, requests changes on or comments on your PR.
+
+## Features
+
+Turn parts of the desktop widgets off on the plugin's entry in `~/.config/omarchy/shell.json` (applies live; missing = on):
+
+```json
+{ "id": "kpedroc.desktop-glance", "github": false, "calendar.events": false }
+```
+
+| Flag | Turns off |
+| --- | --- |
+| `spotify` | cover and player (top-right) and the focus view |
+| `weather` | weather |
+| `calendar` | month grid and upcoming events |
+| `calendar.month` | month grid |
+| `calendar.events` | upcoming events |
+| `github` | pull requests and Actions |
+| `github.pulls` | pull requests |
+| `github.actions` | Actions |
+
+Turned-off features stop syncing too. The Spotify bar widget is separate: `omarchy plugin disable` / `enable`.
+
+## Optional
+
+Hyprland tweaks that go with the plugin.
 
 ### Start Spotify hidden at login (optional)
 
@@ -116,27 +132,6 @@ hl.config({ decoration = { blur = { enabled = true, size = 8, passes = 3 } } })
 o.window({ class = ".*" }, { no_blur = true })  -- keep windows unblurred
 hl.layer_rule({ match = { namespace = "^kpedroc-desktop-glance$" }, blur = true, ignore_alpha = 0.1 })
 ```
-
-### Turn features off (optional)
-
-On the plugin's entry in `~/.config/omarchy/shell.json` (applies live; missing = on):
-
-```json
-{ "id": "kpedroc.desktop-glance", "github": false, "calendar.events": false }
-```
-
-| Flag | Turns off |
-| --- | --- |
-| `spotify` | cover and player (top-right) and the focus view |
-| `weather` | weather |
-| `calendar` | month grid and upcoming events |
-| `calendar.month` | month grid |
-| `calendar.events` | upcoming events |
-| `github` | pull requests and Actions |
-| `github.pulls` | pull requests |
-| `github.actions` | Actions |
-
-Turned-off features stop syncing too. The Spotify bar widget is separate: `omarchy plugin disable` / `enable`.
 
 ## Reference
 
