@@ -1,7 +1,7 @@
 #!/usr/bin/python3
-"""Fetch the calendars in ~/.config/omarchy/desk-calendars and write events
+"""Fetch the calendars in ~/.config/omarchy/desktop-glance/calendars and write events
 from the start of this month's calendar grid to two months ahead to
-~/.cache/omarchy-desk/events.json.
+~/.cache/omarchy/desktop-glance/events.json.
 
 Sources are iCal feed URLs, or `google:<calendar id>` read through the
 Google Calendar API with OAuth.
@@ -34,12 +34,12 @@ from pathlib import Path
 import icalendar
 import recurring_ical_events
 
-CONFIG = Path.home() / ".config/omarchy/desk-calendars"
-OUTPUT = Path.home() / ".cache/omarchy-desk/events.json"
-GOOGLE_CLIENT = Path.home() / ".config/omarchy/desk-google-client.json"
-GOOGLE_TOKEN = Path.home() / ".local/state/omarchy-desk/google-token.json"
-GOOGLE_ACCESS = Path.home() / ".local/state/omarchy-desk/google-access.json"
-GOOGLE_CACHE = Path.home() / ".cache/omarchy-desk/google-cache.json"
+CONFIG = Path.home() / ".config/omarchy/desktop-glance/calendars"
+OUTPUT = Path.home() / ".cache/omarchy/desktop-glance/events.json"
+GOOGLE_CLIENT = Path.home() / ".config/omarchy/desktop-glance/google-client.json"
+GOOGLE_TOKEN = Path.home() / ".local/state/omarchy/desktop-glance/google-token.json"
+GOOGLE_ACCESS = Path.home() / ".local/state/omarchy/desktop-glance/google-access.json"
+GOOGLE_CACHE = Path.home() / ".cache/omarchy/desktop-glance/google-cache.json"
 GOOGLE_INTERVAL = timedelta(minutes=15)
 GOOGLE_SCOPE = "https://www.googleapis.com/auth/calendar.readonly"
 DAYS_AHEAD = 62
@@ -63,7 +63,7 @@ class FeedError(Exception):
 
 
 def fetch(url):
-    request = urllib.request.Request(url, headers={"User-Agent": "omarchy-desk"})
+    request = urllib.request.Request(url, headers={"User-Agent": "omarchy-desktop-glance"})
     try:
         with urllib.request.urlopen(request, timeout=20) as response:
             body = response.read()

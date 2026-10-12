@@ -35,7 +35,7 @@ Item {
   }
 
   FileView {
-    path: Quickshell.env("HOME") + "/.cache/omarchy-desk/github.json"
+    path: Quickshell.env("HOME") + "/.cache/omarchy/desktop-glance/github.json"
     watchChanges: true
     printErrors: false
     onFileChanged: reload()

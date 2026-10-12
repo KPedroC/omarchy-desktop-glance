@@ -1,7 +1,7 @@
 __pycache__/
 
 # Secret calendar feed URLs and cached events must never be committed.
-desk-calendars
+calendars
 events.json
-desk-google-client.json
+google-client.json
 google-token.json

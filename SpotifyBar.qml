@@ -6,7 +6,7 @@ import "spotify/Spotify.js" as Spotify
 
 BarWidget {
   id: root
-  moduleName: "kpedroc.desk"
+  moduleName: "kpedroc.desktop-glance"
 
   readonly property var player: Spotify.findPlayer(Mpris.players ? Mpris.players.values : [])
   readonly property bool playing: player !== null && player.isPlaying

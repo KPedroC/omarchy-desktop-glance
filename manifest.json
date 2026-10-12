@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "id": "kpedroc.desk",
-  "name": "Desk",
+  "id": "kpedroc.desktop-glance",
+  "name": "Desktop Glance",
   "version": "0.3.0",
   "author": "KPedroC",
   "license": "MIT",

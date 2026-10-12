@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell.Io
 
 // Tracks whether a window on the visible workspace overlaps a rect
-// (monitor-local, logical px) via desk-covered.
+// (monitor-local, logical px) via window-covers.
 Item {
   id: root
   visible: false
@@ -14,7 +14,7 @@ Item {
   property real rectHeight: 0
   property bool covered: false
 
-  readonly property string scriptPath: decodeURIComponent(Qt.resolvedUrl("desk-covered").toString().replace("file://", ""))
+  readonly property string scriptPath: decodeURIComponent(Qt.resolvedUrl("window-covers").toString().replace("file://", ""))
 
   function check() {
     if (!screen) return

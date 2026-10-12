@@ -1,4 +1,4 @@
-# desk
+# Desktop Glance
 
 Two parts, enabled separately:
 
@@ -23,17 +23,17 @@ Spotify's window lives on the hidden `special:spotify` workspace. Hide it with t
 ## Install
 
 ```bash
-omarchy plugin add https://github.com/KPedroC/omarchy-desk.git
-omarchy-shell shell enablePlugin kpedroc.desk '{}'   # desktop widgets
-omarchy plugin enable kpedroc.desk                   # bar widget
+omarchy plugin add https://github.com/KPedroC/omarchy-desktop-glance.git
+omarchy-shell shell enablePlugin kpedroc.desktop-glance '{}'   # desktop widgets
+omarchy plugin enable kpedroc.desktop-glance                   # bar widget
 ```
 
-Private repo: needs GitHub access and git credentials (e.g. `gh auth setup-git`). Update with `omarchy plugin update kpedroc.desk`.
+Private repo: needs GitHub access and git credentials (e.g. `gh auth setup-git`). Update with `omarchy plugin update kpedroc.desktop-glance`.
 
 Start Spotify hidden at login (`~/.config/hypr/autostart.lua`):
 
 ```lua
-o.exec_on_start(os.getenv("HOME") .. "/.config/omarchy/plugins/kpedroc.desk/spotify/spotify-toggle --start")
+o.exec_on_start(os.getenv("HOME") .. "/.config/omarchy/plugins/kpedroc.desktop-glance/spotify/spotify-toggle --start")
 ```
 
 Esc hides the Spotify window while it has focus (`~/.config/hypr/bindings.lua`):
@@ -53,7 +53,7 @@ end)
 
 ## Calendars
 
-List feeds in `~/.config/omarchy/desk-calendars` (keep it private, never commit it), one per line:
+List feeds in `~/.config/omarchy/desktop-glance/calendars` (keep it private, never commit it), one per line:
 
 ```
 work     #4f9d69  https://calendar.google.com/calendar/ical/.../basic.ics
@@ -64,18 +64,18 @@ Google calendars that block secret iCal links (e.g. Workspace accounts) can use 
 
 1. Google Cloud Console (signed in with that account): create a project, enable the Google Calendar API
 2. OAuth consent screen: user type **Internal** (Workspace), so the login never expires
-3. Credentials → Create OAuth client ID → **Desktop app** → download JSON to `~/.config/omarchy/desk-google-client.json`
+3. Credentials → Create OAuth client ID → **Desktop app** → download JSON to `~/.config/omarchy/desktop-glance/google-client.json`
 4. `calendar/calendar-sync --login` (opens the browser once), then `calendar/calendar-sync --list` for calendar ids
-5. Add lines like `work  #4f9d69  google:primary` to `desk-calendars`
+5. Add lines like `work  #4f9d69  google:primary` to `calendars`
 
-The refresh token lives in `~/.local/state/omarchy-desk/google-token.json`; declined meetings, out-of-office and working-location entries are skipped.
+The refresh token lives in `~/.local/state/omarchy/desktop-glance/google-token.json`; declined meetings, out-of-office and working-location entries are skipped.
 
-`calendar/calendar-sync` runs every 5 minutes (Google API calendars at most every 15, reusing the access token for its hour; the ↻ button forces a full sync) and writes this month's grid through two months ahead to `~/.cache/omarchy-desk/events.json`. It never prints or logs feed URLs.
+`calendar/calendar-sync` runs every 5 minutes (Google API calendars at most every 15, reusing the access token for its hour; the ↻ button forces a full sync) and writes this month's grid through two months ahead to `~/.cache/omarchy/desktop-glance/events.json`. It never prints or logs feed URLs.
 Requires `python-recurring-ical-events` (`sudo pacman -S python-recurring-ical-events`).
 
 ## GitHub
 
-Uses the `gh` CLI's login. Pull requests cover every repo you can see. List Actions workflows to track in `~/.config/omarchy/desk-github`:
+Uses the `gh` CLI's login. Pull requests cover every repo you can see. List Actions workflows to track in `~/.config/omarchy/desktop-glance/github`:
 
 ```
 # <owner/repo>  <notify: mine|all|none>  <workflow name regex>
@@ -92,8 +92,18 @@ Each section is a translucent island; Hyprland blurs what's behind them. Omarchy
 ```lua
 hl.config({ decoration = { blur = { enabled = true, size = 8, passes = 3 } } })
 o.window({ class = ".*" }, { no_blur = true })  -- keep windows unblurred
-hl.layer_rule({ match = { namespace = "^kpedroc-desk$" }, blur = true, ignore_alpha = 0.1 })
+hl.layer_rule({ match = { namespace = "^kpedroc-desktop-glance$" }, blur = true, ignore_alpha = 0.1 })
 ```
+
+## Files
+
+Kept outside the plugin folder, so updating or removing the plugin never touches them:
+
+| What | Where |
+| --- | --- |
+| Config you edit: `calendars`, `github`, `google-client.json` | `~/.config/omarchy/desktop-glance/` |
+| Google login, notification state | `~/.local/state/omarchy/desktop-glance/` |
+| Synced events and GitHub data (safe to delete) | `~/.cache/omarchy/desktop-glance/` |
 
 ## Layout
 
@@ -106,7 +116,7 @@ hl.layer_rule({ match = { namespace = "^kpedroc-desk$" }, blur = true, ignore_al
 Turn parts of the desktop widgets on or off on the plugin's entry in `~/.config/omarchy/shell.json` (applies live; missing = on):
 
 ```json
-{ "id": "kpedroc.desk", "github": false, "calendar.events": false }
+{ "id": "kpedroc.desktop-glance", "github": false, "calendar.events": false }
 ```
 
 | Flag | Turns off |

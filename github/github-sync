@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 """Fetch GitHub Actions runs for the workflows listed in
-~/.config/omarchy/desk-github, plus your open pull requests with their
-latest reviews/comments and unread state, and write them to ~/.cache/omarchy-desk/github.json. Uses the
+~/.config/omarchy/desktop-glance/github, plus your open pull requests with their
+latest reviews/comments and unread state, and write them to ~/.cache/omarchy/desktop-glance/github.json. Uses the
 gh CLI's login.
 
 Desktop notifications: a tracked run finishing (per the line's notify
@@ -18,9 +18,9 @@ import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-CONFIG = Path.home() / ".config/omarchy/desk-github"
-OUTPUT = Path.home() / ".cache/omarchy-desk/github.json"
-STATE = Path.home() / ".cache/omarchy-desk/github-state.json"
+CONFIG = Path.home() / ".config/omarchy/desktop-glance/github"
+OUTPUT = Path.home() / ".cache/omarchy/desktop-glance/github.json"
+STATE = Path.home() / ".local/state/omarchy/desktop-glance/github-state.json"
 RECENT = timedelta(hours=24)
 MAX_RUNS = 6
 

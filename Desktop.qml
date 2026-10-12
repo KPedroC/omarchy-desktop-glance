@@ -57,7 +57,7 @@ Item {
   Component.onCompleted: recheck.restart()
 
   // Feature flags, inline on this plugin's entry in shell.json, e.g.
-  // { "id": "kpedroc.desk", "github": false }. Missing flags are on.
+  // { "id": "kpedroc.desktop-glance", "github": false }. Missing flags are on.
   property var settings: ({})
   function featureOn(name) { return settings[name] !== false && settings[name.split(".")[0]] !== false }
   readonly property bool weatherOn: featureOn("weather")
@@ -75,7 +75,7 @@ Item {
     onLoaded: {
       try {
         var plugins = JSON.parse(text()).plugins || []
-        var entry = plugins.find(function(p) { return p.id === "kpedroc.desk" })
+        var entry = plugins.find(function(p) { return p.id === "kpedroc.desktop-glance" })
         // Missing mid-rewrite; keep the last flags instead of flickering.
         if (entry) root.settings = entry
       } catch (e) {}
@@ -146,7 +146,7 @@ Item {
         margins { top: root.margin; bottom: root.margin; left: root.margin }
         implicitWidth: root.sidebarWidth
 
-        WlrLayershell.namespace: "kpedroc-desk"
+        WlrLayershell.namespace: "kpedroc-desktop-glance"
         WlrLayershell.layer: WlrLayer.Bottom
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         exclusionMode: ExclusionMode.Normal
@@ -221,7 +221,7 @@ Item {
         implicitWidth: root.rightWidth
         implicitHeight: rightColumn.implicitHeight
 
-        WlrLayershell.namespace: "kpedroc-desk"
+        WlrLayershell.namespace: "kpedroc-desktop-glance"
         WlrLayershell.layer: WlrLayer.Bottom
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         exclusionMode: ExclusionMode.Normal
@@ -272,7 +272,7 @@ Item {
           left: root.margin * 2 + root.sidebarWidth
         }
 
-        WlrLayershell.namespace: "kpedroc-desk"
+        WlrLayershell.namespace: "kpedroc-desktop-glance"
         WlrLayershell.layer: WlrLayer.Bottom
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         exclusionMode: ExclusionMode.Normal

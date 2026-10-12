@@ -67,7 +67,7 @@ Item {
   }
 
   FileView {
-    path: Quickshell.env("HOME") + "/.cache/omarchy-desk/events.json"
+    path: Quickshell.env("HOME") + "/.cache/omarchy/desktop-glance/events.json"
     watchChanges: true
     printErrors: false
     onFileChanged: reload()
