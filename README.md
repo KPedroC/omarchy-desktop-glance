@@ -24,8 +24,8 @@ Spotify's window lives on the hidden `special:spotify` workspace. Hide it with t
 
 - Omarchy (shell plugins, Hyprland)
 - `jq`, `curl`
-- Calendars: `python-recurring-ical-events` (`sudo pacman -S python-recurring-ical-events`)
-- Pull requests and Actions: the `gh` CLI, logged in (`gh auth login`)
+- iCal calendar feeds: `python-recurring-ical-events` (`sudo pacman -S python-recurring-ical-events`)
+- Pull requests and Actions: the `gh` CLI, logged in (`gh auth login`); without it, turn them off with `"github": false` (see [Features](#features))
 - Spotify parts: the Spotify desktop app
 
 ## Install
@@ -153,6 +153,6 @@ Kept outside the plugin folder, so updating or removing the plugin never touches
 
 ### Config
 
-- `Desktop.qml`: `monitor` (empty = first screen), `margin`, `sidebarWidth`, `rightWidth`; row limits on `PullsSection` (`maxMine`) and `ActionsSection` (`maxRuns`), `glass` (island opacity)
+- Shown on every screen. `Desktop.qml`: `margin`, `sidebarWidth`, `rightWidth`; row limits on `PullsSection` (`maxMine`) and `ActionsSection` (`maxRuns`), `glass` (island opacity)
 - Bar widget entry in `shell.json`: `maxChars` (title length, default 30)
 - Desktop widget changes need `omarchy-restart-shell`; the bar widget reloads on save

@@ -31,9 +31,6 @@ import urllib.request
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 
-import icalendar
-import recurring_ical_events
-
 CONFIG = Path.home() / ".config/omarchy/desktop-glance/calendars"
 OUTPUT = Path.home() / ".cache/omarchy/desktop-glance/events.json"
 GOOGLE_CLIENT = Path.home() / ".config/omarchy/desktop-glance/google-client.json"
@@ -305,6 +302,10 @@ def events_for(calendar, start, end, cache, force):
     if calendar["url"].startswith("google:"):
         yield from cached_google_events(calendar, start, end, cache, force)
         return
+    # Only iCal feeds need these (python-recurring-ical-events).
+    import icalendar
+    import recurring_ical_events
+
     ical = icalendar.Calendar.from_ical(fetch(calendar["url"]))
     for event in recurring_ical_events.of(ical).between(start, end):
         if str(event.get("STATUS", "")).upper() == "CANCELLED":
