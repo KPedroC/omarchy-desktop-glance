@@ -15,6 +15,8 @@ Item {
 
   property string locationQuery: ""
   // Last good wttr.in j1 report; kept on failure so stale data stays visible.
+  // Off: no fetching.
+  property bool active: true
   property var report: null
 
   readonly property var current: report && report.current_condition ? report.current_condition[0] : null
@@ -30,7 +32,10 @@ Item {
 
   implicitHeight: content.implicitHeight
 
+  onActiveChanged: refresh()
+
   function refresh() {
+    if (!root.active) return
     fetch.command = ["curl", "-fsS", "--max-time", "10", "https://wttr.in/" + root.locationQuery + "?format=j1"]
     if (!fetch.running) fetch.running = true
   }
@@ -68,7 +73,7 @@ Item {
   Timer {
     interval: 30 * 60000
     repeat: true
-    running: true
+    running: root.active
     onTriggered: root.refresh()
   }
 

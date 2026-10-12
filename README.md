@@ -101,6 +101,27 @@ hl.layer_rule({ match = { namespace = "^kpedroc-desk$" }, blur = true, ignore_al
 - `spotify/`, `calendar/`, `github/`, `weather/`: one folder per feature, with its QML, JS and helper script
 - `common/`: shared pieces (islands, icon buttons, icons, cover detection)
 
+## Features
+
+Turn parts of the desktop widgets on or off on the plugin's entry in `~/.config/omarchy/shell.json` (applies live; missing = on):
+
+```json
+{ "id": "kpedroc.desk", "github": false, "calendar.events": false }
+```
+
+| Flag | Turns off |
+| --- | --- |
+| `spotify` | cover and player (top-right) and the focus view |
+| `weather` | weather |
+| `calendar` | month grid and upcoming events |
+| `calendar.month` | month grid |
+| `calendar.events` | upcoming events |
+| `github` | pull requests and Actions |
+| `github.pulls` | pull requests |
+| `github.actions` | Actions |
+
+Turned-off features stop syncing too. The Spotify bar widget is separate: `omarchy plugin disable` / `enable`.
+
 ## Config
 
 - `Desktop.qml`: `monitor` (empty = first screen), `margin`, `sidebarWidth`, `rightWidth`; row limits on `PullsSection` (`maxMine`) and `ActionsSection` (`maxRuns`), `glass` (island opacity)

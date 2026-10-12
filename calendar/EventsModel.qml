@@ -10,6 +10,8 @@ Item {
 
   readonly property string syncPath: decodeURIComponent(Qt.resolvedUrl("calendar-sync").toString().replace("file://", ""))
 
+  // Off: no syncing.
+  property bool active: true
   property var feed: null
   property var now: new Date()
 
@@ -81,7 +83,7 @@ Item {
   Timer {
     interval: 5 * 60000
     repeat: true
-    running: true
+    running: root.active
     triggeredOnStart: true
     onTriggered: root.sync(false)
   }
@@ -89,7 +91,7 @@ Item {
   Timer {
     interval: 30000
     repeat: true
-    running: true
+    running: root.active
     onTriggered: root.now = new Date()
   }
 }

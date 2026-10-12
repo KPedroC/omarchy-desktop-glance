@@ -11,6 +11,8 @@ Item {
 
   readonly property string syncPath: decodeURIComponent(Qt.resolvedUrl("github-sync").toString().replace("file://", ""))
 
+  // Off: no syncing.
+  property bool active: true
   property var feed: null
   property var now: new Date()
 
@@ -50,7 +52,7 @@ Item {
   Timer {
     interval: root.anyRunning ? 60000 : 5 * 60000
     repeat: true
-    running: true
+    running: root.active
     triggeredOnStart: true
     onTriggered: root.sync()
   }
@@ -58,7 +60,7 @@ Item {
   Timer {
     interval: root.anyRunning ? 1000 : 30000
     repeat: true
-    running: true
+    running: root.active
     onTriggered: root.now = new Date()
   }
 }

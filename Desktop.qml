@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
+import Quickshell.Io
 import Quickshell.Services.Mpris
 import qs.Commons
 import "spotify"
@@ -55,8 +56,34 @@ Item {
 
   Component.onCompleted: recheck.restart()
 
-  EventsModel { id: events }
-  GithubModel { id: github }
+  // Feature flags, inline on this plugin's entry in shell.json, e.g.
+  // { "id": "kpedroc.desk", "github": false }. Missing flags are on.
+  property var settings: ({})
+  function featureOn(name) { return settings[name] !== false && settings[name.split(".")[0]] !== false }
+  readonly property bool weatherOn: featureOn("weather")
+  readonly property bool calendarOn: featureOn("calendar.month")
+  readonly property bool eventsOn: featureOn("calendar.events")
+  readonly property bool pullsOn: featureOn("github.pulls")
+  readonly property bool actionsOn: featureOn("github.actions")
+  readonly property bool spotifyOn: featureOn("spotify")
+
+  FileView {
+    path: Quickshell.env("HOME") + "/.config/omarchy/shell.json"
+    watchChanges: true
+    printErrors: false
+    onFileChanged: reload()
+    onLoaded: {
+      try {
+        var plugins = JSON.parse(text()).plugins || []
+        var entry = plugins.find(function(p) { return p.id === "kpedroc.desk" })
+        // Missing mid-rewrite; keep the last flags instead of flickering.
+        if (entry) root.settings = entry
+      } catch (e) {}
+    }
+  }
+
+  EventsModel { id: events; active: root.calendarOn || root.eventsOn }
+  GithubModel { id: github; active: root.pullsOn || root.actionsOn }
 
   // One set of widgets per screen; follows hot-plugged monitors.
   Variants {
@@ -71,8 +98,8 @@ Item {
       // corner while a window covers that space.
       property bool focusMode: false
       readonly property bool leftShown: !root.barHidden && !leftCover.covered
-      readonly property bool focusShown: !root.barHidden && focusMode && !focusCover.covered
-      readonly property bool rightShown: !root.barHidden && !focusShown && !rightCover.covered
+      readonly property bool focusShown: root.spotifyOn && !root.barHidden && focusMode && !focusCover.covered
+      readonly property bool rightShown: root.spotifyOn && !root.barHidden && !focusShown && !rightCover.covered
 
       // Date picked in the calendar; null shows upcoming events.
       property var selectedDate: null
@@ -135,12 +162,14 @@ Item {
           Island {
             glass: root.glass
             Layout.fillWidth: true
-            WeatherSection { width: parent.width }
+            visible: root.weatherOn
+            WeatherSection { width: parent.width; active: root.weatherOn }
           }
 
           Island {
             glass: root.glass
             Layout.fillWidth: true
+            visible: root.calendarOn
             CalendarSection {
               width: parent.width
               model: events
@@ -155,6 +184,7 @@ Item {
             glass: root.glass
             Layout.fillWidth: true
             Layout.fillHeight: true
+            visible: root.eventsOn
             EventsSection {
               width: parent.width
               height: parent.height
@@ -167,12 +197,14 @@ Item {
           Island {
             glass: root.glass
             Layout.fillWidth: true
+            visible: root.pullsOn
             PullsSection { width: parent.width; model: github; maxMine: 3 }
           }
 
           Island {
             glass: root.glass
             Layout.fillWidth: true
+            visible: root.actionsOn
             ActionsSection { width: parent.width; model: github; maxRuns: 2 }
           }
         }
