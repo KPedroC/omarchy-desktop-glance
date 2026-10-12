@@ -54,6 +54,7 @@ Item {
       height: 24
 
       Text {
+        textFormat: Text.PlainText
         anchors.verticalCenter: parent.verticalCenter
         text: "Actions"
         color: root.fg
@@ -63,6 +64,7 @@ Item {
       }
 
       Text {
+        textFormat: Text.PlainText
         anchors.right: reloadButton.left
         anchors.rightMargin: Style.spacing.md
         anchors.verticalCenter: parent.verticalCenter
@@ -93,6 +95,7 @@ Item {
     }
 
     Text {
+      textFormat: Text.PlainText
       visible: root.model !== null && root.model.feed !== null && root.runs.length === 0
       text: "No runs in the last 24 hours"
       color: root.dim
@@ -118,6 +121,7 @@ Item {
         color: rowMouse.containsMouse ? Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.08) : "transparent"
 
         Text {
+          textFormat: Text.PlainText
           id: icon
           x: 6
           anchors.verticalCenter: parent.verticalCenter
@@ -139,6 +143,7 @@ Item {
         }
 
         Text {
+          textFormat: Text.PlainText
           id: name
           anchors.left: icon.right
           anchors.leftMargin: 8
@@ -154,6 +159,7 @@ Item {
         }
 
         Text {
+          textFormat: Text.PlainText
           id: status
           anchors.right: parent.right
           anchors.rightMargin: 6
@@ -165,6 +171,7 @@ Item {
         }
 
         Text {
+          textFormat: Text.PlainText
           anchors.left: name.left
           anchors.right: parent.right
           anchors.rightMargin: 6

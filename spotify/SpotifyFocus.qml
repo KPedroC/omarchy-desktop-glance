@@ -150,6 +150,7 @@ Item {
           spacing: Style.spacing.xs
 
           Text {
+            textFormat: Text.PlainText
             width: parent.width
             text: root.hasTrack ? root.player.trackTitle : (root.player ? "Nothing playing" : "Spotify isn't running")
             color: root.fg
@@ -160,6 +161,7 @@ Item {
           }
 
           Text {
+            textFormat: Text.PlainText
             width: parent.width
             visible: text !== ""
             text: root.hasTrack ? [root.player.trackArtist, root.player.trackAlbum].filter(Boolean).join("  ·  ") : ""
@@ -278,6 +280,7 @@ Item {
           }
 
           Text {
+            textFormat: Text.PlainText
             anchors.verticalCenter: parent.verticalCenter
             visible: root.hasTrack
             text: root.player ? root.formatTime(root.player.position) + " / " + root.formatTime(root.player.length) : ""

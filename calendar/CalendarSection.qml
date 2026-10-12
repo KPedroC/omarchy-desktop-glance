@@ -86,6 +86,7 @@ Item {
       height: 26
 
       Text {
+        textFormat: Text.PlainText
         anchors.verticalCenter: parent.verticalCenter
         text: Qt.formatDate(new Date(root.viewYear, root.viewMonth, 1), "MMMM yyyy")
         color: root.fg
@@ -115,6 +116,7 @@ Item {
         model: ["", "Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
 
         Text {
+          textFormat: Text.PlainText
           required property string modelData
           width: root.cell
           height: 20
@@ -138,6 +140,7 @@ Item {
         readonly property var monday: root.days[index * 7]
 
         Text {
+          textFormat: Text.PlainText
           width: root.cell
           height: root.cell * 0.78
           horizontalAlignment: Text.AlignHCenter
@@ -177,6 +180,7 @@ Item {
             }
 
             Text {
+              textFormat: Text.PlainText
               anchors.horizontalCenter: parent.horizontalCenter
               anchors.verticalCenter: parent.verticalCenter
               anchors.verticalCenterOffset: -2

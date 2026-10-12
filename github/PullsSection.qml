@@ -76,6 +76,7 @@ Item {
       height: 24
 
       Text {
+        textFormat: Text.PlainText
         anchors.verticalCenter: parent.verticalCenter
         text: "Pull requests"
         color: root.fg
@@ -91,6 +92,7 @@ Item {
         spacing: Style.spacing.lg
 
         Text {
+          textFormat: Text.PlainText
           visible: root.failed
           text: "󰀦 offline"
           color: root.failColor
@@ -99,6 +101,7 @@ Item {
         }
 
         Text {
+          textFormat: Text.PlainText
           visible: root.unreadCount > 0
           text: "● " + root.unreadCount + " new"
           color: Color.accent
@@ -107,6 +110,7 @@ Item {
         }
 
         Text {
+          textFormat: Text.PlainText
           visible: root.mine.length > 0
           text: root.mine.length + (root.mine.length > root.maxMine ? "  ·  all 󰁔" : "")
           color: allMouse.containsMouse ? root.fg : root.dim
@@ -144,6 +148,7 @@ Item {
     }
 
     Text {
+      textFormat: Text.PlainText
       visible: root.model !== null && root.model.feed !== null && root.mine.length === 0
       text: "No open pull requests"
       color: root.dim
@@ -172,6 +177,7 @@ Item {
     opacity: dimmed ? 0.6 : 1
 
     Text {
+      textFormat: Text.PlainText
       id: icon
       x: 6
       anchors.verticalCenter: parent.verticalCenter
@@ -193,6 +199,7 @@ Item {
     }
 
     Text {
+      textFormat: Text.PlainText
       id: titleText
       anchors.left: icon.right
       anchors.leftMargin: 8
@@ -220,6 +227,7 @@ Item {
     }
 
     Text {
+      textFormat: Text.PlainText
       id: detailText
       anchors.left: titleText.left
       anchors.right: status.left
@@ -234,6 +242,7 @@ Item {
     }
 
     Text {
+      textFormat: Text.PlainText
       id: status
       anchors.right: parent.right
       anchors.rightMargin: 6

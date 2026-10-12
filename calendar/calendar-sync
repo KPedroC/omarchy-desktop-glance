@@ -53,7 +53,7 @@ def read_config():
         if not line or line.startswith("#"):
             continue
         parts = line.split()
-        if len(parts) >= 3 and parts[2].startswith(("http", "google:")):
+        if len(parts) >= 3 and parts[2].startswith(("https://", "google:")):
             calendars.append({"label": parts[0], "color": parts[1], "url": parts[2]})
     return calendars
 
@@ -206,12 +206,13 @@ def google_list():
     return 0
 
 
+# The organizer controls conference data; only https links reach xdg-open.
 def google_meeting_link(item):
-    if item.get("hangoutLink"):
+    if item.get("hangoutLink", "").startswith("https://"):
         return item["hangoutLink"]
     for entry in item.get("conferenceData", {}).get("entryPoints", []):
-        if entry.get("entryPointType") == "video":
-            return entry.get("uri", "")
+        if entry.get("entryPointType") == "video" and entry.get("uri", "").startswith("https://"):
+            return entry["uri"]
     for key in ("location", "description"):
         match = MEETING_LINK.search(item.get(key, ""))
         if match:

@@ -44,6 +44,7 @@ Item {
       spacing: Style.spacing.xs
 
       Text {
+        textFormat: Text.PlainText
         width: parent.width
         text: root.hasTrack ? root.player.trackTitle : (root.player ? "Nothing playing" : "Spotify isn't running")
         color: root.fg
@@ -54,6 +55,7 @@ Item {
       }
 
       Text {
+        textFormat: Text.PlainText
         width: parent.width
         text: root.hasTrack ? (root.player.trackArtist || "") : (root.player ? "" : "Click to open")
         color: root.dim
@@ -88,6 +90,7 @@ Item {
         height: elapsed.implicitHeight
 
         Text {
+          textFormat: Text.PlainText
           id: elapsed
           text: root.player ? root.formatTime(root.player.position) : ""
           color: root.dim
@@ -96,6 +99,7 @@ Item {
         }
 
         Text {
+          textFormat: Text.PlainText
           anchors.right: parent.right
           text: root.player ? root.formatTime(root.player.length) : ""
           color: root.dim

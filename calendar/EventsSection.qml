@@ -79,7 +79,7 @@ Item {
 
   // Join shows from 10 minutes before until the meeting ends.
   function canJoin(row) {
-    return !row.event.allDay && row.event.link !== "" && now >= new Date(row.start - 600000) && now < row.end
+    return !row.event.allDay && row.event.link.indexOf("https://") === 0 && now >= new Date(row.start - 600000) && now < row.end
   }
 
   Column {
@@ -91,6 +91,7 @@ Item {
       height: 26
 
       Text {
+        textFormat: Text.PlainText
         anchors.verticalCenter: parent.verticalCenter
         text: root.selectedDate ? root.dayLabel(root.selectedDate) : "Upcoming"
         color: root.fg
@@ -131,6 +132,7 @@ Item {
       }
 
       Text {
+        textFormat: Text.PlainText
         anchors.right: reloadButton.left
         anchors.rightMargin: Style.spacing.md
         anchors.verticalCenter: parent.verticalCenter
@@ -143,6 +145,7 @@ Item {
     }
 
     Text {
+      textFormat: Text.PlainText
       visible: root.model !== null && root.model.feed !== null && root.rows.length === 0
       text: root.selectedDate ? "No events" : "Nothing coming up"
       color: root.dim
@@ -165,6 +168,7 @@ Item {
         opacity: y + height + (row.header ? 30 : 0) <= root.height ? 1 : 0
 
         Text {
+          textFormat: Text.PlainText
           id: header
           visible: rowItem.row.header
           topPadding: 6
@@ -191,6 +195,7 @@ Item {
           }
 
           Text {
+            textFormat: Text.PlainText
             id: time
             anchors.left: dot.right
             anchors.leftMargin: 8
@@ -203,6 +208,7 @@ Item {
           }
 
           Text {
+            textFormat: Text.PlainText
             anchors.left: time.right
             anchors.right: join.visible ? join.left : parent.right
             anchors.rightMargin: 6
@@ -227,6 +233,7 @@ Item {
             color: joinMouse.containsMouse ? Qt.lighter(Color.accent, 1.15) : Color.accent
 
             Text {
+              textFormat: Text.PlainText
               id: joinText
               anchors.centerIn: parent
               text: "Join"

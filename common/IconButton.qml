@@ -36,6 +36,7 @@ Rectangle {
   TextMetrics { id: ink; font: label.font; text: root.glyph }
 
   Text {
+    textFormat: Text.PlainText
     id: label
     visible: root.path === ""
     anchors.centerIn: parent

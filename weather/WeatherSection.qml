@@ -89,6 +89,7 @@ Item {
     spacing: 4
 
     Text {
+      textFormat: Text.PlainText
       text: root.area || "Weather"
       color: root.dim
       font.family: root.fontFamily
@@ -99,6 +100,7 @@ Item {
       spacing: 14
 
       Text {
+        textFormat: Text.PlainText
         anchors.verticalCenter: parent.verticalCenter
         text: root.current ? Weather.iconForCode(root.current.weatherCode, root.night) : "󰖐"
         color: root.fg
@@ -110,6 +112,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
 
         Text {
+          textFormat: Text.PlainText
           text: root.current ? root.current.temp_C + "°" : "--"
           color: root.fg
           font.family: root.fontFamily
@@ -118,6 +121,7 @@ Item {
         }
 
         Text {
+          textFormat: Text.PlainText
           text: root.current ? root.current.weatherDesc[0].value : "Loading…"
           color: root.dim
           font.family: root.fontFamily
@@ -127,6 +131,7 @@ Item {
     }
 
     Text {
+      textFormat: Text.PlainText
       visible: root.current !== null
       text: root.current
         ? "Feels " + root.current.FeelsLikeC + "°  ·  󰖎 " + root.current.humidity + "%  ·  󰖝 " + root.current.windspeedKmph + " km/h"
@@ -151,6 +156,7 @@ Item {
           spacing: 2
 
           Text {
+            textFormat: Text.PlainText
             anchors.horizontalCenter: parent.horizontalCenter
             text: root.dayLabel(index, modelData.date)
             color: root.dim
@@ -159,6 +165,7 @@ Item {
           }
 
           Text {
+            textFormat: Text.PlainText
             anchors.horizontalCenter: parent.horizontalCenter
             text: Weather.iconForCode(modelData.hourly && modelData.hourly[4] ? modelData.hourly[4].weatherCode : 113, false)
             color: root.fg
@@ -167,6 +174,7 @@ Item {
           }
 
           Text {
+            textFormat: Text.PlainText
             anchors.horizontalCenter: parent.horizontalCenter
             text: modelData.maxtempC + "° / " + modelData.mintempC + "°"
             color: root.fg

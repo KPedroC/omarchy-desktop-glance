@@ -38,7 +38,7 @@ def read_config():
 
 
 def gh_api(path):
-    result = subprocess.run(["gh", "api", path], capture_output=True, text=True, timeout=30)
+    result = subprocess.run(["gh", "api", "--method", "GET", path], capture_output=True, text=True, timeout=30)
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip().splitlines()[-1] if result.stderr.strip() else "gh api failed")
     return json.loads(result.stdout)
@@ -64,7 +64,7 @@ ACTIVITY_REASONS = {"author", "comment", "mention", "state_change", "manual", "s
 
 def unread_pull_keys():
     """(repo, number) of your PRs with unread activity notifications."""
-    result = subprocess.run(["gh", "api", "notifications?per_page=100"], capture_output=True, text=True, timeout=30)
+    result = subprocess.run(["gh", "api", "--method", "GET", "notifications?per_page=100"], capture_output=True, text=True, timeout=30)
     if result.returncode != 0:
         return set()
     keys = set()
@@ -138,7 +138,7 @@ def fetch_pulls(me):
 
 
 def notify_text(title, body):
-    subprocess.run(["notify-send", "-a", "GitHub", title, body], check=False)
+    subprocess.run(["notify-send", "-a", "GitHub", "--", title, body], check=False)
 
 
 def parse_time(value):
@@ -156,7 +156,7 @@ def notify(run):
     passed = run["conclusion"] == "success"
     icon = "✓" if passed else "✗"
     verb = "passed" if passed else (run["conclusion"] or "finished")
-    subprocess.run(["notify-send", "-a", "GitHub", f"{icon} {run['workflow']} {verb}",
+    subprocess.run(["notify-send", "-a", "GitHub", "--", f"{icon} {run['workflow']} {verb}",
                     f"{run['title']}\n{run['repo']} · {run['branch']}"], check=False)
 
 

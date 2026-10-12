@@ -46,6 +46,7 @@ Item {
   }
 
   Text {
+    textFormat: Text.PlainText
     anchors.centerIn: parent
     visible: art.status !== Image.Ready
     text: "󰓇"
